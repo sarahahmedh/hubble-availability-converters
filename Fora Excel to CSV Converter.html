@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fora Excel → CSV Converter</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #FEF6EE 0%, #FEF0E8 100%);
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: flex-start; padding: 48px 16px 64px;
+  }
+  .header { text-align: center; margin-bottom: 36px; }
+  .badge {
+    display: inline-block;
+    background: linear-gradient(90deg, #EA580C, #C2410C);
+    color: #fff; font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 4px 12px; border-radius: 999px; margin-bottom: 14px;
+  }
+  h1 { font-size: 1.75rem; font-weight: 800; color: #1C0A00; letter-spacing: -0.03em; margin-bottom: 8px; }
+  h1 span { background: linear-gradient(90deg, #EA580C, #C2410C); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  p.sub { color: #1C0A00; opacity: 0.55; font-size: 0.9rem; }
+  .card {
+    background: rgba(255,255,255,0.75); backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.9); border-radius: 20px;
+    padding: 32px; width: 100%; max-width: 560px;
+    box-shadow: 0 8px 40px rgba(234,88,12,0.08), 0 2px 12px rgba(194,65,12,0.06);
+  }
+  .upload-area {
+    border: 2px dashed rgba(234,88,12,0.3); border-radius: 14px;
+    padding: 40px 20px; text-align: center; cursor: pointer;
+    transition: all 0.2s; margin-bottom: 20px; background: rgba(234,88,12,0.02);
+  }
+  .upload-area:hover, .upload-area.drag { border-color: #EA580C; background: rgba(234,88,12,0.05); }
+  .upload-area input { display: none; }
+  .upload-icon {
+    width: 52px; height: 52px;
+    background: linear-gradient(135deg, #FEF6EE, #FEF0E8);
+    border: 1px solid rgba(234,88,12,0.2); border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; margin: 0 auto 14px;
+  }
+  .upload-area p { font-size: 0.875rem; color: #1C0A00; opacity: 0.7; }
+  .upload-area strong { color: #1C0A00; opacity: 1; }
+  .file-name { margin-top: 10px; font-size: 0.8rem; color: #EA580C; font-weight: 600; }
+  button.run {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, #EA580C, #C2410C);
+    color: #fff; border: none; border-radius: 12px;
+    font-size: 1rem; font-weight: 700; cursor: pointer;
+    transition: all 0.2s; letter-spacing: -0.01em;
+    box-shadow: 0 4px 20px rgba(234,88,12,0.35);
+  }
+  button.run:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(234,88,12,0.45); }
+  button.run:disabled { background: linear-gradient(135deg, #FDBA74, #FB923C); box-shadow: none; cursor: not-allowed; transform: none; }
+  .status { margin-top: 14px; font-size: 0.85rem; color: #1C0A00; opacity: 0.7; min-height: 20px; text-align: center; }
+  .status.error { color: #dc2626; opacity: 1; font-weight: 500; }
+  .status.success { color: #059669; opacity: 1; font-weight: 600; }
+  .divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(234,88,12,0.15), transparent); margin: 24px 0; }
+  details { cursor: pointer; }
+  summary {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #EA580C; list-style: none;
+    display: flex; align-items: center; gap: 8px; user-select: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '▸'; font-size: 0.75rem; transition: transform 0.2s; }
+  details[open] summary::after { transform: rotate(90deg); }
+  .rules-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+  .rule { display: flex; align-items: flex-start; gap: 10px; font-size: 0.8rem; color: #1C0A00; opacity: 0.75; line-height: 1.4; }
+  .rule-dot {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: linear-gradient(135deg, #EA580C, #C2410C);
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 0.6rem; font-weight: 800; color: #fff; margin-top: 1px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="badge">Fora Excel → CSV</div>
+  <h1>Fora: <span>Step 1</span></h1>
+  <p class="sub">Converts Fora Excel availability file → clean CSV ready for the converter</p>
+</div>
+
+<div class="card">
+  <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+    <div class="upload-icon">📂</div>
+    <p><strong>Click to upload</strong> or drag & drop</p>
+    <p>Fora availability .xlsx file</p>
+    <div class="file-name" id="fileName"></div>
+    <input type="file" id="fileInput" accept=".xlsx,.xls">
+  </div>
+
+  <button class="run" id="runBtn" disabled onclick="convert()">Convert & Download CSV</button>
+  <div class="status" id="status"></div>
+
+  <div class="divider"></div>
+
+  <details>
+    <summary>Column mappings</summary>
+    <div class="rules-grid">
+      <div class="rule"><div class="rule-dot">✓</div>Building ← Building Name</div>
+      <div class="rule"><div class="rule-dot">✓</div>Office/Unit Number ← Office No.</div>
+      <div class="rule"><div class="rule-dot">✓</div>Floor ← extracted from Office No. prefix (3.01→3, GF→Ground, LG→Lower Ground, B→Basement)</div>
+      <div class="rule"><div class="rule-dot">✓</div>Square footage ← Sq/ft</div>
+      <div class="rule"><div class="rule-dot">✓</div>Price per month ← Monthly Price (£ stripped, rounded up)</div>
+      <div class="rule"><div class="rule-dot">✓</div>Desk capacity ← Desks</div>
+      <div class="rule"><div class="rule-dot">✓</div>Available from ← Date (yyyy-mm-dd, future only; "Available now" = blank)</div>
+      <div class="rule"><div class="rule-dot">✓</div>What's included ← "- Office - [No.]" + "- [Notes]"</div>
+      <div class="rule"><div class="rule-dot">✓</div>Number of additional rooms ← extracted from Office Notes</div>
+      <div class="rule"><div class="rule-dot">✓</div>Notes ← Office Notes</div>
+      <div class="rule"><div class="rule-dot">✓</div>Min term (months): 3 | Max term: 24 | What's not included: blank</div>
+      <div class="rule"><div class="rule-dot" style="background:linear-gradient(135deg,#dc2626,#991b1b)">✗</div>Rows where Contract = "Under offer" are skipped</div>
+    </div>
+  </details>
+</div>
+
+<script>
+const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+
+const OUTPUT_HEADERS = [
+  'Building','Office/Unit Number','Floor','Square footage','Price per month',
+  'Desk capacity','Available from','Min term (months)','Max term (months)',
+  "What's included","What's not included",'Number of additional rooms','Notes'
+];
+
+let workbookData = null;
+
+document.getElementById('fileInput').addEventListener('change', e => {
+  const f = e.target.files[0]; if (f) loadFile(f);
+});
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag');
+  const f = e.dataTransfer.files[0]; if (f) loadFile(f);
+});
+
+function loadFile(f) {
+  document.getElementById('fileName').textContent = f.name;
+  setStatus('Reading file...', '');
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      workbookData = new Uint8Array(ev.target.result);
+      document.getElementById('runBtn').disabled = false;
+      setStatus('File loaded — ready to convert.', '');
+    } catch(e) {
+      setStatus('Error reading file: ' + e.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(f);
+}
+
+function setStatus(msg, cls) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status' + (cls ? ' ' + cls : '');
+}
+
+function parseFloor(officeNo) {
+  if (!officeNo) return '';
+  const prefix = String(officeNo).trim().split('.')[0].split('/')[0];
+  const low = prefix.toLowerCase();
+  if (low === 'g' || low === 'gf' || low === 'ground') return 'Ground';
+  if (low === 'lg' || low === 'lower ground') return 'Lower Ground';
+  if (low === 'b' || low === 'basement') return 'Basement';
+  const n = parseInt(prefix, 10);
+  return isNaN(n) ? prefix : n;
+}
+
+function parsePrice(raw) {
+  if (!raw) return '';
+  const n = parseFloat(String(raw).replace(/[£,\s]/g, ''));
+  return isNaN(n) ? '' : Math.ceil(n);
+}
+
+function parseAvailable(raw) {
+  if (!raw) return '';
+  const s = String(raw).trim();
+  if (/available|now|immediate|tbc|tba|enquire/i.test(s)) return '';
+  // Handle d/m/yyyy
+  const parts = s.split('/');
+  if (parts.length === 3) {
+    const [a, b, c] = parts;
+    const d = new Date(`${c}-${b.padStart(2,'0')}-${a.padStart(2,'0')}`);
+    if (!isNaN(d.getTime())) {
+      d.setHours(0,0,0,0);
+      if (d <= TODAY) return '';
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+  }
+  // Try Excel serial date (number)
+  if (!isNaN(raw)) {
+    const d = new Date(Math.round((raw - 25569) * 86400 * 1000));
+    d.setHours(0,0,0,0);
+    if (d <= TODAY) return '';
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  return '';
+}
+
+function extractAdditionalRooms(note) {
+  if (!note) return '';
+  const s = String(note).replace(/\b\d+\s*(?:[\-\u2013]\s*\d+)?\s*desks?\b/gi, '');
+  const explicit = /\b(\d+)\s*(?:x\s*)?(?:\w+\s+){0,3}(?:meeting\s+rooms?|boardrooms?|board\s+rooms?|MRs?\b|meeting\s+pods?)/gi;
+  const internalNoNum = /(?<!\d\s)(?<!\d)internal\s+meeting\s+rooms?\b/gi;
+  const personRoom = /\b\d+[\-\u2013](?:\d+\s+)?(?:person|pax|seat)\s+(?:\w+\s+){0,2}(?:meeting\s+rooms?|meeting\s+pods?|boardrooms?)/gi;
+  let total = 0, m;
+  while ((m = explicit.exec(s)) !== null) total += parseInt(m[1]);
+  if (total === 0) total += (s.match(internalNoNum) || []).length;
+  if (total === 0) total += (s.match(personRoom) || []).length;
+  return total > 0 ? String(total) : '';
+}
+
+function toCSVRow(fields) {
+  return fields.map(cell => {
+    const s = String(cell ?? '');
+    return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+  }).join(',');
+}
+
+function convert() {
+  if (!workbookData) return;
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  setStatus('Processing...', '');
+
+  try {
+    const wb = XLSX.read(workbookData, { type: 'array', cellDates: true });
+
+    // Find the main data sheet — prefer one with "Building Name" header
+    let ws = null;
+    for (const name of wb.SheetNames) {
+      const sheet = wb.Sheets[name];
+      const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+      const flat = json.slice(0, 10).map(r => r.join('|')).join('|');
+      if (/building name/i.test(flat)) { ws = sheet; break; }
+    }
+    if (!ws) ws = wb.Sheets[wb.SheetNames[0]];
+
+    const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+    // Find header row
+    let headerIdx = -1;
+    for (let i = 0; i < Math.min(raw.length, 15); i++) {
+      if (raw[i].some(c => /building name/i.test(String(c)))) { headerIdx = i; break; }
+    }
+    if (headerIdx < 0) throw new Error('Could not find "Building Name" header row.');
+
+    const headers = raw[headerIdx].map(h => String(h).trim());
+    const hi = (...names) => {
+      for (const n of names) {
+        const i = headers.findIndex(h => h.toLowerCase().replace(/[\s\.\/]/g,'') === n.toLowerCase().replace(/[\s\.\/]/g,''));
+        if (i >= 0) return i;
+      }
+      for (const n of names) {
+        const i = headers.findIndex(h => h.toLowerCase().includes(n.toLowerCase()));
+        if (i >= 0) return i;
+      }
+      return -1;
+    };
+
+    const iBuilding  = hi('Building Name', 'Building');
+    const iOffice    = hi('Office No', 'Office No.', 'Office/Unit Number', 'Office Number', 'Unit Number');
+    const iSqft      = hi('Sq/ft', 'Sqft', 'Square footage');
+    const iDesks     = hi('Desks');
+    const iPrice     = hi('Monthly Price', 'Price per month');
+    const iDate      = hi('Date', 'Available');
+    const iNotes     = hi('Office Notes', 'Notes');
+    const iContract  = hi('Contract');
+
+    if (iBuilding < 0) throw new Error('No "Building Name" column found.');
+    if (iOffice   < 0) throw new Error('No "Office No." column found.');
+    if (iPrice    < 0) throw new Error('No "Monthly Price" column found.');
+
+    const csvLines = [toCSVRow(OUTPUT_HEADERS)];
+    let skippedUnderOffer = 0;
+
+    for (let i = headerIdx + 1; i < raw.length; i++) {
+      const row = raw[i];
+      const building  = String(row[iBuilding] || '').trim();
+      const officeNo  = String(row[iOffice]   || '').trim();
+      const priceRaw  = row[iPrice];
+      if (!building || !officeNo || !priceRaw) continue;
+
+      // Skip rows where Contract = "Under offer"
+      if (iContract >= 0 && /under offer/i.test(String(row[iContract] || ''))) {
+        skippedUnderOffer++; continue;
+      }
+
+      const price = parsePrice(priceRaw);
+      if (!price) continue;
+
+      const sqft  = parseFloat(String(row[iSqft]  || '').replace(/[,\s]/g,'')) || '';
+      const desks = String(row[iDesks] || '').trim();
+      const notes = String(row[iNotes] || '').trim();
+      const avail = parseAvailable(row[iDate]);
+
+      const includedParts = [`- Office - ${officeNo}`];
+      if (notes) includedParts.push(`- ${notes}`);
+
+      csvLines.push(toCSVRow([
+        building,
+        officeNo,
+        parseFloor(officeNo),
+        sqft,
+        price,
+        desks,
+        avail,
+        3,
+        24,
+        includedParts.join('\n'),
+        '',
+        extractAdditionalRooms(notes),
+        notes
+      ]));
+    }
+
+    if (csvLines.length < 2) throw new Error('No data rows found.');
+
+    const blob = new Blob([csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const d = TODAY;
+    const date = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+    a.href = url;
+    a.download = `Fora_Availability_${date}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    const skippedMsg = skippedUnderOffer > 0 ? ` (${skippedUnderOffer} "Under offer" row${skippedUnderOffer > 1 ? 's' : ''} skipped)` : '';
+    setStatus(`✓ Done — ${csvLines.length - 1} offices exported to CSV.${skippedMsg}`, 'success');
+  } catch(err) {
+    setStatus('Error: ' + err.message, 'error');
+    console.error(err);
+  }
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>

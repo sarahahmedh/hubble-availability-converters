@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hubble Availability Converter</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', 'Segoe UI', sans-serif;
+    background: #0f0f0f;
+    color: #e8e6e0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 48px 24px 64px;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
+
+  .wordmark {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #666;
+    margin-bottom: 48px;
+    align-self: flex-start;
+  }
+
+  .wordmark span {
+    color: #c8ff6a;
+  }
+
+  .hero {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .hero h1 {
+    font-size: 36px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    color: #e8e6e0;
+    margin-bottom: 12px;
+    line-height: 1.1;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: #c8ff6a;
+  }
+
+  .hero p {
+    font-size: 14px;
+    color: #666;
+    font-weight: 300;
+  }
+
+  .drop-zone {
+    width: 100%;
+    max-width: 560px;
+    border: 1px dashed #333;
+    border-radius: 16px;
+    padding: 56px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+    background: #141414;
+  }
+
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: #c8ff6a;
+    background: #161a10;
+  }
+
+  .drop-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .drop-icon {
+    width: 48px;
+    height: 48px;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    color: #555;
+  }
+
+  .drop-icon svg { width: 22px; height: 22px; }
+
+  .drop-label {
+    font-size: 15px;
+    font-weight: 400;
+    color: #bbb;
+    margin-bottom: 6px;
+  }
+
+  .drop-sub {
+    font-size: 12px;
+    color: #444;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .status-bar {
+    width: 100%;
+    max-width: 560px;
+    margin-top: 20px;
+    display: none;
+  }
+
+  .status-bar.visible { display: block; }
+
+  .status-msg {
+    font-size: 13px;
+    font-family: 'DM Mono', monospace;
+    color: #666;
+    padding: 12px 0;
+    border-top: 1px solid #1f1f1f;
+  }
+
+  .status-msg.ok { color: #c8ff6a; }
+  .status-msg.err { color: #ff6b6b; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: #1f1f1f;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 16px;
+  }
+
+  .stat {
+    background: #141414;
+    padding: 16px 20px;
+    text-align: center;
+  }
+
+  .stat-n {
+    font-size: 24px;
+    font-weight: 300;
+    color: #c8ff6a;
+    font-family: 'DM Mono', monospace;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-l {
+    font-size: 11px;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .download-btn {
+    display: none;
+    margin-top: 28px;
+    background: #c8ff6a;
+    color: #0f0f0f;
+    border: none;
+    border-radius: 10px;
+    padding: 14px 32px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: 0.01em;
+    transition: background 0.15s, transform 0.1s;
+    width: 100%;
+    max-width: 560px;
+  }
+
+  .download-btn:hover { background: #d9ff85; }
+  .download-btn:active { transform: scale(0.99); }
+  .download-btn.visible { display: block; }
+
+  .rules {
+    width: 100%;
+    max-width: 560px;
+    margin-top: 48px;
+    border-top: 1px solid #1a1a1a;
+    padding-top: 28px;
+  }
+
+  .rules-title {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #333;
+    margin-bottom: 16px;
+  }
+
+  .rule {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: #444;
+    line-height: 1.5;
+  }
+
+  .rule-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #333;
+    flex-shrink: 0;
+    margin-top: 7px;
+  }
+</style>
+</head>
+<body>
+
+<div class="wordmark">Hubble <span>//</span> Availability</div>
+
+<div class="hero">
+  <h1>Drop your report.<br>Get it <em>sorted.</em></h1>
+  <p>Reorders offices smallest → largest per building, removes merged cells, adds location dividers.</p>
+</div>
+
+<div class="drop-zone" id="dropZone">
+  <input type="file" id="fileInput" accept=".xlsx,.xls" />
+  <div class="drop-icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="12" y1="18" x2="12" y2="12"/>
+      <polyline points="9 15 12 12 15 15"/>
+    </svg>
+  </div>
+  <div class="drop-label">Drop your availability .xlsx here</div>
+  <div class="drop-sub">or click to browse</div>
+</div>
+
+<div class="status-bar" id="statusBar">
+  <div class="status-msg" id="statusMsg"></div>
+  <div class="stats" id="statsGrid" style="display:none"></div>
+</div>
+
+<button class="download-btn" id="downloadBtn">Download sorted report</button>
+
+<div class="rules">
+  <div class="rules-title">What this does</div>
+  <div class="rule"><div class="rule-dot"></div>Fills in Market + Location Name on every row (removes merged cells)</div>
+  <div class="rule"><div class="rule-dot"></div>Sorts offices within each building from smallest to largest desk count</div>
+  <div class="rule"><div class="rule-dot"></div>Preserves original building order from the source report</div>
+  <div class="rule"><div class="rule-dot"></div>Adds a bold divider line between each location group</div>
+  <div class="rule"><div class="rule-dot"></div>Outputs a clean .xlsx ready to share</div>
+</div>
+
+<script>
+const COL_ORDER = ['Location Name','Office Number','Office Size (WU)','List Price (Local)','Available From','Square Footage'];
+const ALL_COLS = ['Market','Location Name','Office Number','Office Size (WU)','List Price (Local)','List ARPM (Local)','Available From','Monthly Membership Fee','Price Per WU (Local)','Square Footage'];
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const statusBar = document.getElementById('statusBar');
+const statusMsg = document.getElementById('statusMsg');
+const statsGrid = document.getElementById('statsGrid');
+const downloadBtn = document.getElementById('downloadBtn');
+
+let outputBlob = null;
+let outputFilename = '';
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+});
+fileInput.addEventListener('change', e => {
+  if (e.target.files[0]) processFile(e.target.files[0]);
+});
+
+function setStatus(msg, type) {
+  statusBar.classList.add('visible');
+  statusMsg.className = 'status-msg ' + (type || '');
+  statusMsg.textContent = msg;
+}
+
+function processFile(file) {
+  setStatus('Reading file…', '');
+  statsGrid.style.display = 'none';
+  downloadBtn.classList.remove('visible');
+  outputBlob = null;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, { defval: null });
+
+      if (!raw.length) { setStatus('No data found in file.', 'err'); return; }
+
+      // Forward-fill Market and Location Name
+      let lastMarket = null, lastLocation = null;
+      const rows = raw.map(r => {
+        if (r['Market']) lastMarket = r['Market'];
+        if (r['Location Name']) lastLocation = r['Location Name'];
+        return { ...r, 'Market': lastMarket, 'Location Name': lastLocation };
+      });
+
+      // Preserve original location order
+      const locationOrder = [];
+      const seen = new Set();
+      rows.forEach(r => {
+        const loc = r['Location Name'];
+        if (loc && !seen.has(loc)) { locationOrder.push(loc); seen.add(loc); }
+      });
+      const locIndex = Object.fromEntries(locationOrder.map((l, i) => [l, i]));
+
+      // Sort: by original location order, then by desk size ascending
+      rows.sort((a, b) => {
+        const li = (locIndex[a['Location Name']] ?? 999) - (locIndex[b['Location Name']] ?? 999);
+        if (li !== 0) return li;
+        return (Number(a['Office Size (WU)']) || 0) - (Number(b['Office Size (WU)']) || 0);
+      });
+
+      // Build output workbook
+      const outWb = XLSX.utils.book_new();
+      const outData = [COL_ORDER, ...rows.map(r => COL_ORDER.map(c => r[c] ?? ''))];
+      const outWs = XLSX.utils.aoa_to_sheet(outData);
+
+      // Column widths
+      const colWidths = [28, 14, 16, 18, 16, 14];
+      outWs['!cols'] = colWidths.map(w => ({ wch: w }));
+
+      // Bold header row
+      COL_ORDER.forEach((_, ci) => {
+        const addr = XLSX.utils.encode_cell({ r: 0, c: ci });
+        if (!outWs[addr]) return;
+        outWs[addr].s = { font: { bold: true }, fill: { fgColor: { rgb: 'F2F2F2' } } };
+      });
+
+      // Find location boundaries and add thick bottom border
+      const medium = { style: 'medium', color: { rgb: '000000' } };
+      const thin = { style: 'thin', color: { rgb: 'CCCCCC' } };
+
+      for (let ri = 1; ri < outData.length - 1; ri++) {
+        const thisLoc = outData[ri][1];
+        const nextLoc = outData[ri + 1][1];
+        const isBoundary = thisLoc !== nextLoc;
+
+        COL_ORDER.forEach((_, ci) => {
+          const addr = XLSX.utils.encode_cell({ r: ri, c: ci });
+          if (!outWs[addr]) outWs[addr] = { t: 'z' };
+          outWs[addr].s = outWs[addr].s || {};
+          outWs[addr].s.border = {
+            bottom: isBoundary ? medium : thin,
+            top: thin, left: thin, right: thin
+          };
+        });
+      }
+
+      XLSX.utils.book_append_sheet(outWb, outWs, 'Availability');
+
+      const arrBuf = XLSX.write(outWb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+      outputBlob = new Blob([arrBuf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+      // Stats
+      const markets = new Set(rows.map(r => r['Market'])).size;
+      const locations = locationOrder.length;
+      const offices = rows.length;
+
+      statsGrid.style.display = 'grid';
+      statsGrid.innerHTML = [
+        [markets, 'Markets'],
+        [locations, 'Locations'],
+        [offices, 'Offices']
+      ].map(([n, l]) => `<div class="stat"><div class="stat-n">${n}</div><div class="stat-l">${l}</div></div>`).join('');
+
+      const baseName = file.name.replace(/\.xlsx?$/i, '');
+      outputFilename = baseName + '_sorted.xlsx';
+      setStatus('Done — ' + offices + ' offices sorted across ' + locations + ' locations.', 'ok');
+      downloadBtn.classList.add('visible');
+    } catch (err) {
+      setStatus('Error: ' + err.message, 'err');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+downloadBtn.addEventListener('click', () => {
+  if (!outputBlob) return;
+  const url = URL.createObjectURL(outputBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = outputFilename;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+</script>
+</body>
+</html>

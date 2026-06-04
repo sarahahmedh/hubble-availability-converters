@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Host Workspace Excel → CSV Converter</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #EEFBFE 0%, #FEEFF8 100%);
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: flex-start; padding: 48px 16px 64px;
+  }
+  .header { text-align: center; margin-bottom: 36px; }
+  .badge {
+    display: inline-block;
+    background: linear-gradient(90deg, #4BF4FF, #00F2C4);
+    color: #050A3A; font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 4px 12px; border-radius: 999px; margin-bottom: 14px;
+  }
+  h1 { font-size: 1.75rem; font-weight: 800; color: #050A3A; letter-spacing: -0.03em; margin-bottom: 8px; }
+  h1 span { background: linear-gradient(90deg, #FF377A, #7200FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  p.sub { color: #4C0649; opacity: 0.6; font-size: 0.9rem; }
+  .card {
+    background: rgba(255,255,255,0.75); backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.9); border-radius: 20px;
+    padding: 32px; width: 100%; max-width: 560px;
+    box-shadow: 0 8px 40px rgba(114,0,255,0.08), 0 2px 12px rgba(255,55,122,0.06);
+  }
+  .upload-area {
+    border: 2px dashed rgba(255,55,122,0.3); border-radius: 14px;
+    padding: 40px 20px; text-align: center; cursor: pointer;
+    transition: all 0.2s; margin-bottom: 20px; background: rgba(255,55,122,0.02);
+  }
+  .upload-area:hover, .upload-area.drag { border-color: #FF377A; background: rgba(255,55,122,0.05); }
+  .upload-area input { display: none; }
+  .upload-icon {
+    width: 52px; height: 52px;
+    background: linear-gradient(135deg, #FEEFF8, #EEFBFE);
+    border: 1px solid rgba(255,55,122,0.2); border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; margin: 0 auto 14px;
+  }
+  .upload-area p { font-size: 0.875rem; color: #4C0649; opacity: 0.7; }
+  .upload-area strong { color: #050A3A; opacity: 1; }
+  .file-name { margin-top: 10px; font-size: 0.8rem; color: #FF377A; font-weight: 600; }
+  button.run {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, #FF377A, #c0006a);
+    color: #fff; border: none; border-radius: 12px;
+    font-size: 1rem; font-weight: 700; cursor: pointer;
+    transition: all 0.2s; letter-spacing: -0.01em;
+    box-shadow: 0 4px 20px rgba(255,55,122,0.35);
+  }
+  button.run:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(255,55,122,0.45); }
+  button.run:disabled { background: linear-gradient(135deg, #f4a0bb, #e0779a); box-shadow: none; cursor: not-allowed; transform: none; }
+  .status { margin-top: 14px; font-size: 0.85rem; color: #4C0649; opacity: 0.7; min-height: 20px; text-align: center; }
+  .status.error { color: #dc2626; opacity: 1; font-weight: 500; }
+  .status.success { color: #059669; opacity: 1; font-weight: 600; }
+  .divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(114,0,255,0.1), transparent); margin: 24px 0; }
+  details { cursor: pointer; }
+  summary {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #7200FF; list-style: none;
+    display: flex; align-items: center; gap: 8px; user-select: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '▸'; font-size: 0.75rem; transition: transform 0.2s; }
+  details[open] summary::after { transform: rotate(90deg); }
+  .rules-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+  .rule { display: flex; align-items: flex-start; gap: 10px; font-size: 0.8rem; color: #050A3A; opacity: 0.75; line-height: 1.4; }
+  .rule-dot {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: linear-gradient(135deg, #4BF4FF, #00F2C4);
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 0.6rem; font-weight: 800; color: #050A3A; margin-top: 1px;
+  }
+  .rule code { background: rgba(114,0,255,0.07); padding: 1px 5px; border-radius: 4px; font-size: 0.75rem; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="badge">Host Workspace Excel → CSV</div>
+  <h1>Host: <span>Step 1</span></h1>
+  <p class="sub">Converts Workspace drop sheet .xlsx → clean CSV ready for the converter</p>
+</div>
+
+<div class="card">
+  <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+    <div class="upload-icon">📂</div>
+    <p><strong>Click to upload</strong> or drag & drop</p>
+    <p>Workspace Drop Sheet .xlsx file</p>
+    <div class="file-name" id="fileName"></div>
+    <input type="file" id="fileInput" accept=".xlsx,.xls">
+  </div>
+
+  <button class="run" id="runBtn" disabled onclick="convert()">Convert & Download CSV</button>
+  <div class="status" id="status"></div>
+
+  <div class="divider"></div>
+
+  <details>
+    <summary>Column mappings</summary>
+    <div class="rules-grid">
+      <div class="rule"><div class="rule-dot">✓</div><span><code>Building</code> ← Property</span></div>
+      <div class="rule"><div class="rule-dot">✓</div><span><code>Unit Ref</code> ← Reference / Ref</span></div>
+      <div class="rule"><div class="rule-dot">✓</div><span><code>Floor</code> ← Floor</span></div>
+      <div class="rule"><div class="rule-dot">✓</div><span><code>Sq. Ft.</code> ← Sq. Ft.</span></div>
+      <div class="rule"><div class="rule-dot">✓</div><span><code>PCM (£)</code> ← ASK NetRSC PCM</span></div>
+      <div class="rule"><div class="rule-dot">✓</div><span><code>Available Text</code> ← Available Text</span></div>
+      <div class="rule"><div class="rule-dot">✓</div><span><code>Rates p/m (£)</code> ← Rates Payable</span></div>
+      <div class="rule"><div class="rule-dot">✓</div><span><code>Comments</code> ← Comments</span></div>
+    </div>
+  </details>
+</div>
+
+<script>
+let workbookData = null;
+
+document.getElementById('fileInput').addEventListener('change', e => {
+  const f = e.target.files[0]; if (f) loadFile(f);
+});
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag');
+  const f = e.dataTransfer.files[0]; if (f) loadFile(f);
+});
+
+function loadFile(f) {
+  document.getElementById('fileName').textContent = f.name;
+  setStatus('Reading file...', '');
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      workbookData = new Uint8Array(ev.target.result);
+      document.getElementById('runBtn').disabled = false;
+      setStatus('File loaded — ready to convert.', '');
+    } catch(e) {
+      setStatus('Error reading file: ' + e.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(f);
+}
+
+function setStatus(msg, cls) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status' + (cls ? ' ' + cls : '');
+}
+
+function toCSVRow(fields) {
+  return fields.map(cell => {
+    const s = String(cell ?? '');
+    return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+  }).join(',');
+}
+
+function convert() {
+  if (!workbookData) return;
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  setStatus('Processing...', '');
+
+  try {
+    const wb = XLSX.read(workbookData, { type: 'array' });
+
+    // Use the first non-hidden sheet
+    let ws = null;
+    for (const name of wb.SheetNames) {
+      if (/hidden/i.test(name)) continue;
+      ws = wb.Sheets[name];
+      break;
+    }
+    if (!ws) ws = wb.Sheets[wb.SheetNames[0]];
+
+    const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+    if (raw.length < 2) throw new Error('Sheet appears empty.');
+
+    // Scan for the header row — it may not be row 0 (file may have title rows above)
+    const KNOWN_HEADERS = ['unit ref', 'building', 'property', 'reference', 'ref', 'floor', 'pcm'];
+    let headerRowIdx = -1;
+    for (let i = 0; i < Math.min(raw.length, 10); i++) {
+      const row = raw[i].map(h => String(h).trim().toLowerCase());
+      const matches = KNOWN_HEADERS.filter(k => row.some(h => h.includes(k)));
+      if (matches.length >= 3) { headerRowIdx = i; break; }
+    }
+    if (headerRowIdx < 0) throw new Error('Could not find header row in the first 10 rows.');
+
+    const headers = raw[headerRowIdx].map(h => String(h).trim());
+
+    // Flexible column finder — exact match first, then partial
+    const hi = (...names) => {
+      for (const n of names) {
+        const i = headers.findIndex(h => h.toLowerCase().replace(/[\s\.]/g, '') === n.toLowerCase().replace(/[\s\.]/g, ''));
+        if (i >= 0) return i;
+      }
+      for (const n of names) {
+        const i = headers.findIndex(h => h.toLowerCase().includes(n.toLowerCase()));
+        if (i >= 0) return i;
+      }
+      return -1;
+    };
+
+    const iProp     = hi('Building', 'Property');
+    const iRef      = hi('Unit Ref', 'Reference', 'Ref');
+    const iFloor    = hi('Floor');
+    const iSqft     = hi('Sq Ft', 'Sq. Ft.', 'Sqft', 'Square Feet');
+    const iPrice    = hi('PCM (£)', 'ASK NetRSC PCM', 'NetRSC PCM');
+    const iAvail    = hi('Available', 'Available Text');
+    const iRates    = hi('Rates p/m (£)', 'Rates Payable', 'Rates');
+    const iComments = hi('Comments');
+
+    if (iProp  < 0) throw new Error('No "Building" or "Property" column found.');
+    if (iRef   < 0) throw new Error('No "Unit Ref" or "Reference" column found.');
+    if (iPrice < 0) throw new Error('No "PCM (£)" or "ASK NetRSC PCM" column found.');
+
+    const OUTPUT_HEADERS = ['Building', 'Unit Ref', 'Floor', 'Sq. Ft.', 'PCM (£)', 'Available Text', 'Rates p/m (£)', 'Comments'];
+    const csvLines = [toCSVRow(OUTPUT_HEADERS)];
+
+    for (let i = headerRowIdx + 1; i < raw.length; i++) {
+      const row = raw[i];
+      const building = String(row[iProp] || '').trim();
+      const ref      = String(row[iRef]  || '').trim();
+      // Skip section header rows (only building name, no unit ref) and blank rows
+      if (!building || !ref) continue;
+
+      csvLines.push(toCSVRow([
+        building,
+        ref,
+        iFloor    >= 0 ? String(row[iFloor]    || '').trim() : '',
+        iSqft     >= 0 ? String(row[iSqft]     || '').trim() : '',
+        iPrice    >= 0 ? String(row[iPrice]    || '').trim() : '',
+        iAvail    >= 0 ? String(row[iAvail]    || '').trim() : '',
+        iRates    >= 0 ? String(row[iRates]    || '').trim() : '',
+        iComments >= 0 ? String(row[iComments] || '').trim() : '',
+      ]));
+    }
+
+    if (csvLines.length < 2) throw new Error('No data rows found.');
+
+    const blob = new Blob([csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const today = new Date();
+    const date = `${String(today.getDate()).padStart(2,'0')}.${String(today.getMonth()+1).padStart(2,'0')}.${today.getFullYear()}`;
+    a.href = url;
+    a.download = `Workspace_Drop_Sheet_${date}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    setStatus(`✓ Done — ${csvLines.length - 1} units exported to CSV.`, 'success');
+  } catch(err) {
+    setStatus('Error: ' + err.message, 'error');
+    console.error(err);
+  }
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>
