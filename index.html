@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hubble Tools</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: 'DM Sans', sans-serif;
-    background: #0f0f0f;
-    color: #e8e6e0;
+    font-family: 'Inter', sans-serif;
+    background: #f9f9f9;
+    color: #1a1a1a;
     min-height: 100vh;
     padding: 48px 24px 80px;
     display: flex;
@@ -23,26 +23,32 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 64px;
+    margin-bottom: 56px;
   }
   .wordmark {
-    font-family: 'DM Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a1a;
+    letter-spacing: -0.02em;
+  }
+  .wordmark-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e70f67;
+  }
+  .tag {
     font-size: 11px;
     font-weight: 500;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #444;
-  }
-  .wordmark span { color: #c8ff6a; }
-  .tag {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: #333;
-    border: 1px solid #222;
+    color: #e70f67;
+    background: #fde8f1;
     border-radius: 20px;
-    padding: 4px 10px;
+    padding: 4px 12px;
   }
   .hero {
     width: 100%;
@@ -50,36 +56,37 @@
     margin-bottom: 48px;
   }
   .hero h1 {
-    font-size: 42px;
+    font-size: 38px;
     font-weight: 300;
     letter-spacing: -0.03em;
-    line-height: 1.05;
-    margin-bottom: 14px;
+    line-height: 1.1;
+    margin-bottom: 12px;
+    color: #1a1a1a;
   }
-  .hero h1 em { font-style: normal; color: #c8ff6a; }
+  .hero h1 strong {
+    font-weight: 600;
+    color: #e70f67;
+  }
   .hero p {
     font-size: 14px;
-    color: #555;
-    font-weight: 300;
+    color: #888;
+    font-weight: 400;
     line-height: 1.6;
+    max-width: 420px;
   }
   .section-label {
     width: 100%;
     max-width: 680px;
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.15em;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: #333;
-    margin-bottom: 16px;
+    color: #bbb;
+    margin-bottom: 12px;
     padding-bottom: 12px;
-    border-bottom: 1px solid #1a1a1a;
+    border-bottom: 1px solid #eee;
     display: flex;
     justify-content: space-between;
-    align-items: center;
-  }
-  .section-label span {
-    color: #2a2a2a;
   }
   .tools {
     width: 100%;
@@ -87,52 +94,58 @@
     display: flex;
     flex-direction: column;
     gap: 1px;
-    background: #1a1a1a;
+    background: #e8e8e8;
     border-radius: 16px;
     overflow: hidden;
-    margin-bottom: 32px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .group-label {
+    background: #f4f4f4;
+    padding: 8px 24px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #bbb;
+    border-bottom: 1px solid #e8e8e8;
   }
   .tool {
-    background: #141414;
-    padding: 22px 28px;
+    background: #fff;
+    padding: 20px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 24px;
+    gap: 20px;
     text-decoration: none;
     color: inherit;
-    transition: background 0.15s;
+    transition: background 0.12s;
   }
-  .tool:hover { background: #181818; }
-  .tool:hover .tool-arrow { color: #c8ff6a; transform: translateX(3px); }
-  .tool-left { display: flex; align-items: center; gap: 16px; flex: 1; min-width: 0; }
+  .tool:hover { background: #fdf5f9; }
+  .tool:hover .tool-arrow { color: #e70f67; transform: translateX(3px); }
+  .tool-left { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; }
   .tool-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: #fde8f1;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 17px;
     flex-shrink: 0;
   }
-  .icon-green { background: #161f10; }
-  .icon-orange { background: #1f1508; }
-  .icon-pink { background: #1f1018; }
   .tool-info { flex: 1; min-width: 0; }
   .tool-name {
     font-size: 14px;
     font-weight: 500;
-    color: #e8e6e0;
-    margin-bottom: 3px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    color: #1a1a1a;
+    margin-bottom: 2px;
   }
   .tool-desc {
     font-size: 12px;
-    color: #4a4a4a;
-    font-weight: 300;
+    color: #aaa;
+    font-weight: 400;
     line-height: 1.4;
     white-space: nowrap;
     overflow: hidden;
@@ -145,49 +158,37 @@
     flex-shrink: 0;
   }
   .tool-badge {
-    font-family: 'DM Mono', monospace;
     font-size: 10px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    background: #1a1a1a;
-    color: #3a3a3a;
-    border: 1px solid #222;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    background: #f4f4f4;
+    color: #bbb;
     border-radius: 20px;
-    padding: 3px 9px;
+    padding: 3px 10px;
     white-space: nowrap;
   }
   .tool-step {
-    font-family: 'DM Mono', monospace;
     font-size: 10px;
-    letter-spacing: 0.06em;
-    color: #333;
+    font-weight: 500;
+    color: #e70f67;
+    background: #fde8f1;
+    border-radius: 20px;
+    padding: 3px 10px;
     white-space: nowrap;
   }
   .tool-arrow {
-    color: #2a2a2a;
-    font-size: 18px;
+    color: #ddd;
+    font-size: 16px;
     transition: color 0.15s, transform 0.15s;
-    line-height: 1;
-  }
-  .group-label {
-    background: #0f0f0f;
-    padding: 10px 28px;
-    font-family: 'DM Mono', monospace;
-    font-size: 9px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: #2a2a2a;
-    border-bottom: 1px solid #1a1a1a;
   }
   footer {
     width: 100%;
     max-width: 680px;
-    margin-top: 32px;
-    padding-top: 24px;
-    border-top: 1px solid #1a1a1a;
-    font-family: 'DM Mono', monospace;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
     font-size: 11px;
-    color: #2a2a2a;
+    color: #ccc;
     display: flex;
     justify-content: space-between;
   }
@@ -196,17 +197,20 @@
 <body>
 
 <header>
-  <div class="wordmark">Hubble <span>//</span> Tools</div>
+  <div class="wordmark">
+    <div class="wordmark-dot"></div>
+    Hubble Tools
+  </div>
   <div class="tag">Internal</div>
 </header>
 
 <div class="hero">
-  <h1>Your team's<br><em>toolkit.</em></h1>
-  <p>All Hubble internal tools in one place. Click any tool to open it — everything runs in your browser, nothing is uploaded anywhere.</p>
+  <h1>All your tools,<br><strong>one place.</strong></h1>
+  <p>Internal converters for the Hubble team. Click any tool to open it — everything runs in your browser, nothing is uploaded anywhere.</p>
 </div>
 
 <div class="section-label">
-  Available tools
+  <span>Available tools</span>
   <span>5 tools</span>
 </div>
 
@@ -216,7 +220,7 @@
 
   <a class="tool" href="Hubble_Availability_Converter.html">
     <div class="tool-left">
-      <div class="tool-icon icon-green">📊</div>
+      <div class="tool-icon">📊</div>
       <div class="tool-info">
         <div class="tool-name">Hubble Availability Converter</div>
         <div class="tool-desc">Sorts offices smallest → largest per building, strips merged cells, adds location dividers</div>
@@ -230,12 +234,12 @@
 
   <div class="group-label">Fora</div>
 
-  <a class="tool" href="Fora_Excel_to_CSV_Converter.html">
+  <a class="tool" href="Fora Excel to CSV Converter.html">
     <div class="tool-left">
-      <div class="tool-icon icon-orange">📂</div>
+      <div class="tool-icon">📂</div>
       <div class="tool-info">
         <div class="tool-name">Fora Excel → CSV</div>
-        <div class="tool-desc">Step 1 — Converts Fora availability .xlsx into a clean CSV ready for the converter</div>
+        <div class="tool-desc">Converts Fora availability .xlsx into a clean CSV ready for the converter</div>
       </div>
     </div>
     <div class="tool-right">
@@ -245,12 +249,12 @@
     </div>
   </a>
 
-  <a class="tool" href="Fora_Availability_Converter.html">
+  <a class="tool" href="Fora Availability Converter.html">
     <div class="tool-left">
-      <div class="tool-icon icon-orange">🔁</div>
+      <div class="tool-icon">🔁</div>
       <div class="tool-info">
         <div class="tool-name">Fora Availability Converter</div>
-        <div class="tool-desc">Step 2 — Converts Fora CSV into Django-ready CSVs, one per building, zipped</div>
+        <div class="tool-desc">Converts Fora CSV into Django-ready CSVs, one per building, zipped</div>
       </div>
     </div>
     <div class="tool-right">
@@ -262,12 +266,12 @@
 
   <div class="group-label">Workspace</div>
 
-  <a class="tool" href="Workspace_Excel_to_CSV_Converter.html">
+  <a class="tool" href="Workspace Excel to CSV Converter.html">
     <div class="tool-left">
-      <div class="tool-icon icon-pink">📂</div>
+      <div class="tool-icon">📂</div>
       <div class="tool-info">
         <div class="tool-name">Workspace Excel → CSV</div>
-        <div class="tool-desc">Step 1 — Converts Workspace drop sheet .xlsx into a clean CSV ready for the converter</div>
+        <div class="tool-desc">Converts Workspace drop sheet .xlsx into a clean CSV ready for the converter</div>
       </div>
     </div>
     <div class="tool-right">
@@ -277,12 +281,12 @@
     </div>
   </a>
 
-  <a class="tool" href="Workspace_Converter.html">
+  <a class="tool" href="Workspace Converter.html">
     <div class="tool-left">
-      <div class="tool-icon icon-pink">🔁</div>
+      <div class="tool-icon">🔁</div>
       <div class="tool-info">
         <div class="tool-name">Workspace Availability Converter</div>
-        <div class="tool-desc">Step 2 — Converts Workspace CSV into Django-ready CSVs, one per building, zipped</div>
+        <div class="tool-desc">Converts Workspace CSV into Django-ready CSVs, one per building, zipped</div>
       </div>
     </div>
     <div class="tool-right">
