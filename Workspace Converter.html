@@ -2,296 +2,139 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Drop Sheet Converter</title>
+<title>Workspace Availability Converter</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+<style>  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Inter', sans-serif;
     min-height: 100vh;
-    background: linear-gradient(135deg, #EEFBFE 0%, #FEEFF8 100%);
+    background: #f9f9f9;
     display: flex; flex-direction: column; align-items: center;
     justify-content: flex-start; padding: 48px 16px 64px;
   }
-  .header { text-align: center; margin-bottom: 36px; }
+  .top-nav {
+    width: 100%; max-width: 560px;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 40px;
+  }
+  .wordmark { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: #1a1a1a; letter-spacing: -0.02em; text-decoration: none; }
+  .wordmark-dot { width: 7px; height: 7px; border-radius: 50%; background: #e70f67; flex-shrink: 0; }
+  .back-link { font-size: 12px; color: #bbb; text-decoration: none; transition: color 0.15s; }
+  .back-link:hover { color: #e70f67; }
+  .header { text-align: center; margin-bottom: 32px; }
   .badge {
-    display: inline-block;
-    background: linear-gradient(90deg, #4BF4FF, #00F2C4);
-    color: #050A3A; font-size: 0.7rem; font-weight: 700;
-    letter-spacing: 0.08em; text-transform: uppercase;
+    display: inline-block; background: #fde8f1; color: #e70f67;
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
     padding: 4px 12px; border-radius: 999px; margin-bottom: 14px;
   }
-  h1 { font-size: 1.75rem; font-weight: 800; color: #050A3A; letter-spacing: -0.03em; margin-bottom: 8px; }
-  h1 span { background: linear-gradient(90deg, #FF377A, #7200FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  p.sub { color: #4C0649; opacity: 0.6; font-size: 0.9rem; }
+  h1 { font-size: 1.75rem; font-weight: 600; color: #1a1a1a; letter-spacing: -0.03em; margin-bottom: 8px; }
+  h1 span { color: #e70f67; }
+  p.sub { color: #999; font-size: 0.9rem; font-weight: 400; }
   .card {
-    background: rgba(255,255,255,0.75); backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.9); border-radius: 20px;
-    padding: 32px; width: 100%; max-width: 560px;
-    box-shadow: 0 8px 40px rgba(114,0,255,0.08), 0 2px 12px rgba(255,55,122,0.06);
+    background: #fff; border: 1px solid #eee; border-radius: 16px;
+    padding: 28px; width: 100%; max-width: 560px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
   }
   .upload-area {
-    border: 2px dashed rgba(255,55,122,0.3); border-radius: 14px;
-    padding: 40px 20px; text-align: center; cursor: pointer;
-    transition: all 0.2s; margin-bottom: 20px; background: rgba(255,55,122,0.02);
+    border: 1.5px dashed #eee; border-radius: 12px;
+    padding: 36px 20px; text-align: center; cursor: pointer;
+    transition: all 0.2s; margin-bottom: 20px; background: #fafafa;
   }
-  .upload-area:hover, .upload-area.drag { border-color: #FF377A; background: rgba(255,55,122,0.05); }
+  .upload-area:hover, .upload-area.drag { border-color: #e70f67; background: #fdf5f9; }
   .upload-area input { display: none; }
   .upload-icon {
-    width: 52px; height: 52px;
-    background: linear-gradient(135deg, #FEEFF8, #EEFBFE);
-    border: 1px solid rgba(255,55,122,0.2); border-radius: 14px;
+    width: 48px; height: 48px; background: #fde8f1; border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.4rem; margin: 0 auto 14px;
+    font-size: 1.3rem; margin: 0 auto 12px;
   }
-  .upload-area p { font-size: 0.875rem; color: #4C0649; opacity: 0.7; }
-  .upload-area strong { color: #050A3A; opacity: 1; }
-  .file-name { margin-top: 10px; font-size: 0.8rem; color: #FF377A; font-weight: 600; }
+  .upload-area p { font-size: 0.875rem; color: #999; }
+  .upload-area strong { color: #1a1a1a; font-weight: 500; }
+  .file-name { margin-top: 8px; font-size: 0.8rem; color: #e70f67; font-weight: 500; }
   button.run {
-    width: 100%; padding: 14px;
-    background: linear-gradient(135deg, #FF377A, #c0006a);
-    color: #fff; border: none; border-radius: 12px;
-    font-size: 1rem; font-weight: 700; cursor: pointer;
-    transition: all 0.2s; letter-spacing: -0.01em;
-    box-shadow: 0 4px 20px rgba(255,55,122,0.35);
+    width: 100%; padding: 13px; background: #e70f67;
+    color: #fff; border: none; border-radius: 10px;
+    font-size: 0.95rem; font-weight: 500; cursor: pointer;
+    transition: background 0.15s, transform 0.1s; font-family: 'Inter', sans-serif;
   }
-  button.run:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(255,55,122,0.45); }
-  button.run:disabled { background: linear-gradient(135deg, #f4a0bb, #e0779a); box-shadow: none; cursor: not-allowed; transform: none; }
-  .status { margin-top: 14px; font-size: 0.85rem; color: #4C0649; opacity: 0.7; min-height: 20px; text-align: center; }
-  .status.error { color: #dc2626; opacity: 1; font-weight: 500; }
-  .status.success { color: #059669; opacity: 1; font-weight: 600; }
-  .divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(114,0,255,0.1), transparent); margin: 24px 0; }
+  button.run:hover { background: #c8005a; }
+  button.run:active { transform: scale(0.99); }
+  button.run:disabled { background: #f4a0c3; cursor: not-allowed; transform: none; }
+  .status { margin-top: 12px; font-size: 0.85rem; color: #bbb; min-height: 20px; text-align: center; }
+  .status.error { color: #dc2626; font-weight: 500; }
+  .status.success { color: #059669; font-weight: 500; }
+  .divider { height: 1px; background: #f0f0f0; margin: 20px 0; }
   details { cursor: pointer; }
   summary {
-    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.08em; color: #7200FF; list-style: none;
+    font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #e70f67; list-style: none;
     display: flex; align-items: center; gap: 8px; user-select: none;
   }
   summary::-webkit-details-marker { display: none; }
   summary::after { content: '▸'; font-size: 0.75rem; transition: transform 0.2s; }
   details[open] summary::after { transform: rotate(90deg); }
-  .rules-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
-  .rule { display: flex; align-items: flex-start; gap: 10px; font-size: 0.8rem; color: #050A3A; opacity: 0.75; line-height: 1.4; }
+  .rules-grid { display: flex; flex-direction: column; gap: 7px; margin-top: 12px; }
+  .rule { display: flex; align-items: flex-start; gap: 10px; font-size: 0.8rem; color: #666; line-height: 1.4; }
   .rule-dot {
-    width: 18px; height: 18px; border-radius: 50%;
-    background: linear-gradient(135deg, #4BF4FF, #00F2C4);
+    width: 16px; height: 16px; border-radius: 50%; background: #e70f67;
     flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-    font-size: 0.6rem; font-weight: 800; color: #050A3A; margin-top: 1px;
+    font-size: 0.55rem; font-weight: 700; color: #fff; margin-top: 1px;
   }
-</style>
+  .rule-dot.skip { background: #dc2626; }
+  .rule code { background: #fde8f1; color: #e70f67; padding: 1px 5px; border-radius: 4px; font-size: 0.75rem; }</style>
 </head>
 <body>
+<div class="top-nav">
+  <a class="wordmark" href="index.html"><div class="wordmark-dot"></div>Hubble Tools</a>
+  <a class="back-link" href="index.html">← Back to all tools</a>
+</div>
 <div class="header">
-  <div class="badge">Host Availability Update Converter</div>
-  <h1>Host: <span>Workspace</span></h1>
+  <div class="badge">Step 2 · Workspace</div>
+  <h1>Workspace <span>Availability Converter</span></h1>
   <p class="sub">Converts host drop sheet → Django compatible CSV for upload</p>
 </div>
-
 <div class="card">
   <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
     <div class="upload-icon">📂</div>
-    <p><strong>Click to upload</strong> or drag & drop</p>
+    <p><strong>Click to upload</strong> or drag &amp; drop</p>
     <p>Workspace Drop Sheet .csv file</p>
     <div class="file-name" id="fileName"></div>
     <input type="file" id="fileInput" accept=".csv">
   </div>
-
-  <button class="run" id="runBtn" disabled onclick="convert()">Convert & Download</button>
+  <button class="run" id="runBtn" disabled onclick="convert()">Convert &amp; Download</button>
   <div class="status" id="status"></div>
-
   <div class="divider"></div>
-
   <details>
-    <summary>Applied Rules</summary>
+    <summary>Applied rules</summary>
     <div class="rules-grid">
-      <div class="rule"><div class="rule-dot">✓</div>One CSV per Building (Property), zipped</div>
+      <div class="rule"><div class="rule-dot">✓</div>One CSV per building (Property), zipped</div>
       <div class="rule"><div class="rule-dot">✓</div>Office/Unit Number ← Reference</div>
       <div class="rule"><div class="rule-dot">✓</div>Floor: numeric only (1st→1, G→Ground, LG→Lower Ground, B→Basement)</div>
       <div class="rule"><div class="rule-dot">✓</div>Price per month ← ASK NetRSC PCM (number only, no £ or commas)</div>
       <div class="rule"><div class="rule-dot">✓</div>Desk capacity: ceil(Sq. Ft. / 50)</div>
       <div class="rule"><div class="rule-dot">✓</div>Available from ← Available Text (yyyy-mm-dd, future dates only)</div>
-      <div class="rule"><div class="rule-dot">✓</div>What's included: "- Office - [Reference]"</div>
-      <div class="rule"><div class="rule-dot">✓</div>What's not included: "Business rates of £X per month" ← Rates Payable ÷ 12 (rounded up)</div>
-      <div class="rule"><div class="rule-dot">✓</div>Min term (months): 6 | Max term (months): empty</div>
-      <div class="rule"><div class="rule-dot">✓</div>Notes ← Comments</div>
+      <div class="rule"><div class="rule-dot">✓</div>What's not included: "Business rates of £X per month" ← Rates Payable ÷ 12</div>
+      <div class="rule"><div class="rule-dot">✓</div>Min term: 6 months | Max term: empty</div>
     </div>
   </details>
 </div>
-
 <script>
-const TODAY = new Date(); TODAY.setHours(0,0,0,0);
-
-const OUTPUT_HEADERS = [
-  "Office/Unit Number","Floor","Square footage","Price per month",
-  "Desk capacity","Available from","Min term (months)","Max term (months)",
-  "What's included","What's not included","Notes"
-];
-
-let csvText = null;
-
-document.getElementById('fileInput').addEventListener('change', e => {
-  const f = e.target.files[0]; if (f) loadFile(f);
-});
-const dz = document.getElementById('dropZone');
-dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
-dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
-dz.addEventListener('drop', e => {
-  e.preventDefault(); dz.classList.remove('drag');
-  const f = e.dataTransfer.files[0]; if (f) loadFile(f);
-});
-
-function loadFile(f) {
-  document.getElementById('fileName').textContent = f.name;
-  document.getElementById('status').textContent = 'Reading file...';
-  document.getElementById('status').className = 'status';
-  const reader = new FileReader();
-  reader.onload = ev => {
-    csvText = ev.target.result;
-    const lines = csvText.trim().split('\n').length;
-    document.getElementById('runBtn').disabled = false;
-    document.getElementById('status').textContent = `Loaded: ~${lines - 1} rows found.`;
-  };
-  reader.readAsText(f);
-}
-
-function parseCSV(text) {
-  const rows = []; let row = []; let cell = ''; let inQ = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i], n = text[i+1];
-    if (inQ) {
-      if (c === '"' && n === '"') { cell += '"'; i++; }
-      else if (c === '"') inQ = false;
-      else cell += c;
-    } else {
-      if (c === '"') inQ = true;
-      else if (c === ',') { row.push(cell.trim()); cell = ''; }
-      else if (c === '\n' || (c === '\r' && n === '\n')) {
-        if (c === '\r') i++;
-        row.push(cell.trim()); rows.push(row); row = []; cell = '';
-      } else cell += c;
-    }
-  }
-  if (cell || row.length) { row.push(cell.trim()); rows.push(row); }
-  return rows;
-}
-
-function parseFloor(raw) {
-  if (!raw || !String(raw).trim()) return '';
-  const s = String(raw).trim(), low = s.toLowerCase();
-  if (low === 'g' || low === 'ground') return 'Ground';
-  if (low === 'lg' || low === 'lower ground' || low === 'lower-ground') return 'Lower Ground';
-  if (low === 'b' || low === 'basement') return 'Basement';
-  const n = parseInt(s.replace(/[^0-9\-]/g, ''), 10);
-  return isNaN(n) ? s : n;
-}
-
-function parsePrice(raw) {
-  if (!raw) return '';
-  const n = parseFloat(String(raw).replace(/[£,\s]/g, ''));
-  return isNaN(n) ? '' : Math.ceil(n);
-}
-
-function parseAvailableFrom(raw) {
-  if (!raw) return '';
-  const s = String(raw).trim();
-  if (!s || /now|enquire|enquiry|tbc|tba/i.test(s)) return '';
-  const d = new Date(s); d.setHours(0,0,0,0);
-  if (isNaN(d.getTime())) return '';
-  if (d <= TODAY) return '';
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-
-function parseRates(raw) {
-  if (!raw) return '';
-  const n = parseFloat(String(raw).replace(/[£,\s]/g, ''));
-  if (isNaN(n)) return '';
-  const monthly = Math.ceil(n / 12);
-  return `Business rates of £${monthly} per month`;
-}
-
-function toCSV(rows) {
-  return rows.map(r => r.map(cell => {
-    const s = String(cell ?? '');
-    return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
-  }).join(',')).join('\r\n');
-}
-
-async function convert() {
-  if (!csvText) return;
-  const btn = document.getElementById('runBtn'), st = document.getElementById('status');
-  btn.disabled = true; st.textContent = 'Processing...'; st.className = 'status';
-
-  try {
-    const rows = parseCSV(csvText);
-    if (rows.length < 2) throw new Error('File appears empty or unreadable.');
-
-    const headers = rows[0].map(h => h.trim());
-    const data = rows.slice(1).filter(r => r.some(c => c !== ''));
-
-    const hi = (...names) => { for (const n of names) { const i = headers.findIndex(h => h.toLowerCase() === n.toLowerCase()); if (i >= 0) return i; } return -1; };
-
-    const iRef      = hi('Reference');
-    const iProp     = hi('Property');
-    const iFloor    = hi('Floor');
-    const iSqft     = hi('Sq. Ft.');
-    const iPrice    = hi('ASK NetRSC PCM');
-    const iAvail    = hi('Available Text');
-    const iRates    = hi('Rates Payable');
-    const iComments = hi('Comments');
-
-    const buildings = {};
-
-    data.forEach(row => {
-      const building = iProp >= 0 ? String(row[iProp] || '').trim() : 'Unknown';
-      if (!building) return;
-      if (!buildings[building]) buildings[building] = [];
-
-      const sqft = parseFloat(String(row[iSqft] || '').replace(/[,\s]/g, '')) || 0;
-      const ref = iRef >= 0 ? String(row[iRef] || '').trim() : '';
-
-      buildings[building].push({
-        "Office/Unit Number": ref,
-        "Floor": iFloor >= 0 ? parseFloor(row[iFloor]) : '',
-        "Square footage": sqft || '',
-        "Price per month": iPrice >= 0 ? parsePrice(row[iPrice]) : '',
-        "Desk capacity": sqft > 0 ? Math.ceil(sqft / 50) : '',
-        "Available from": iAvail >= 0 ? parseAvailableFrom(row[iAvail]) : '',
-        "Min term (months)": 6,
-        "Max term (months)": '',
-        "What's included": ref ? `- Office - ${ref}` : '',
-        "What's not included": iRates >= 0 ? parseRates(row[iRates]) : '',
-        "Notes": iComments >= 0 ? String(row[iComments] || '').trim() : ''
-      });
-    });
-
-    const buildingNames = Object.keys(buildings);
-    if (!buildingNames.length) throw new Error('No building data found.');
-
-    const zip = new JSZip();
-    buildingNames.forEach(bName => {
-      const csvRows = [OUTPUT_HEADERS, ...buildings[bName].map(r => OUTPUT_HEADERS.map(h => r[h] ?? ''))];
-      const safeName = bName.replace(/[:\\\/\?\*\[\]<>|]/g, '').trim();
-      zip.file(`${safeName}.csv`, toCSV(csvRows));
-    });
-
-    const d = TODAY;
-    const date = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
-    const blob = await zip.generateAsync({ type: 'blob' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `Django Ready Building Output - Host Workspace - Date ${date}.zip`;
-    a.click(); URL.revokeObjectURL(url);
-
-    st.textContent = `✓ Done — ${buildingNames.length} CSVs zipped and downloaded.`;
-    st.className = 'status success';
-  } catch(err) {
-    st.textContent = 'Error: ' + err.message;
-    st.className = 'status error';
-    console.error(err);
-  }
-  btn.disabled = false;
-}
+const TODAY=new Date();TODAY.setHours(0,0,0,0);
+const OUTPUT_HEADERS=["Office/Unit Number","Floor","Square footage","Price per month","Desk capacity","Available from","Min term (months)","Max term (months)","What's included","What's not included","Notes"];
+let csvText=null;
+document.getElementById('fileInput').addEventListener('change',e=>{const f=e.target.files[0];if(f)loadFile(f);});
+const dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');const f=e.dataTransfer.files[0];if(f)loadFile(f);});
+function loadFile(f){document.getElementById('fileName').textContent=f.name;document.getElementById('status').textContent='Reading file...';document.getElementById('status').className='status';const reader=new FileReader();reader.onload=ev=>{csvText=ev.target.result;const lines=csvText.trim().split('\n').length;document.getElementById('runBtn').disabled=false;document.getElementById('status').textContent='Loaded: ~'+(lines-1)+' rows found.';};reader.readAsText(f);}
+function parseCSV(text){const rows=[];let row=[],cell='',inQ=false;for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];if(inQ){if(c==='"'&&n==='"'){cell+='"';i++;}else if(c==='"')inQ=false;else cell+=c;}else{if(c==='"')inQ=true;else if(c===','){row.push(cell.trim());cell='';}else if(c==='\n'||(c==='\r'&&n==='\n')){if(c==='\r')i++;row.push(cell.trim());rows.push(row);row=[];cell='';}else cell+=c;}}if(cell||row.length){row.push(cell.trim());rows.push(row);}return rows;}
+function parseFloor(r){if(!r||!String(r).trim())return '';const s=String(r).trim(),l=s.toLowerCase();if(l==='g'||l==='ground')return 'Ground';if(l==='lg'||l==='lower ground'||l==='lower-ground')return 'Lower Ground';if(l==='b'||l==='basement')return 'Basement';const n=parseInt(s.replace(/[^0-9-]/g,''),10);return isNaN(n)?s:n;}
+function parsePrice(r){if(!r)return '';const n=parseFloat(String(r).replace(/[£,\s]/g,''));return isNaN(n)?'':Math.ceil(n);}
+function parseAvail(r){if(!r)return '';const s=String(r).trim();if(!s||/now|enquire|enquiry|tbc|tba/i.test(s))return '';const d=new Date(s);d.setHours(0,0,0,0);if(isNaN(d.getTime())||d<=TODAY)return '';return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function parseRates(r){if(!r)return '';const n=parseFloat(String(r).replace(/[£,\s]/g,''));if(isNaN(n))return '';return 'Business rates of £'+Math.ceil(n/12)+' per month';}
+function toCSV(rows){return rows.map(r=>r.map(c=>{const s=String(c??'');return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\r\n');}
+async function convert(){if(!csvText)return;const btn=document.getElementById('runBtn'),st=document.getElementById('status');btn.disabled=true;st.textContent='Processing...';st.className='status';try{const rows=parseCSV(csvText);if(rows.length<2)throw new Error('File appears empty.');const headers=rows[0].map(h=>h.trim());const data=rows.slice(1).filter(r=>r.some(c=>c!==''));const hi=(...names)=>{for(const n of names){const i=headers.findIndex(h=>h.toLowerCase()===n.toLowerCase());if(i>=0)return i;}return -1;};const iRef=hi('Reference'),iProp=hi('Property'),iFloor=hi('Floor'),iSqft=hi('Sq. Ft.'),iPrice=hi('ASK NetRSC PCM'),iAvail=hi('Available Text'),iRates=hi('Rates Payable'),iComments=hi('Comments');const buildings={};data.forEach(row=>{const b=iProp>=0?String(row[iProp]||'').trim():'Unknown';if(!b)return;if(!buildings[b])buildings[b]=[];const sq=parseFloat(String(row[iSqft]||'').replace(/[,\s]/g,''))||0,ref=iRef>=0?String(row[iRef]||'').trim():'';buildings[b].push({"Office/Unit Number":ref,"Floor":iFloor>=0?parseFloor(row[iFloor]):'',"Square footage":sq||'',"Price per month":iPrice>=0?parsePrice(row[iPrice]):'',"Desk capacity":sq>0?Math.ceil(sq/50):'',"Available from":iAvail>=0?parseAvail(row[iAvail]):'',"Min term (months)":6,"Max term (months)":'',"What's included":ref?'- Office - '+ref:'',"What's not included":iRates>=0?parseRates(row[iRates]):'',"Notes":iComments>=0?String(row[iComments]||'').trim():''});});const names=Object.keys(buildings);if(!names.length)throw new Error('No building data found.');const zip=new JSZip();names.forEach(n=>{const csvRows=[OUTPUT_HEADERS,...buildings[n].map(r=>OUTPUT_HEADERS.map(h=>r[h]??''))];zip.file(n.replace(/[:\/\?*\[\]<>|]/g,'').trim()+'.csv',toCSV(csvRows));});const d=TODAY,date=String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear();const blob=await zip.generateAsync({type:'blob'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Django Ready Building Output - Host Workspace - Date '+date+'.zip';a.click();URL.revokeObjectURL(url);st.textContent='✓ Done — '+names.length+' CSVs downloaded.';st.className='status success';}catch(err){st.textContent='Error: '+err.message;st.className='status error';}btn.disabled=false;}
 </script>
 </body>
 </html>
