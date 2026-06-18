@@ -37,6 +37,7 @@
     padding: 48px 16px 80px;
   }
 
+  /* ── Header ── */
   .header { text-align: center; margin-bottom: 36px; }
   .badge {
     display: inline-flex; align-items: center; gap: 6px;
@@ -50,6 +51,7 @@
   h1 em { font-style: normal; color: var(--brand); }
   p.sub { color: var(--text-muted); font-size: 0.875rem; }
 
+  /* ── Card ── */
   .card {
     background: var(--card-bg); backdrop-filter: blur(24px);
     border: 1px solid rgba(255,255,255,0.95); border-radius: 22px;
@@ -57,6 +59,7 @@
     box-shadow: var(--shadow);
   }
 
+  /* ── Tabs ── */
   .tabs {
     display: flex; gap: 4px; margin-bottom: 22px;
     background: var(--brand-faint); border-radius: 12px; padding: 4px;
@@ -73,6 +76,7 @@
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
+  /* ── Upload ── */
   .upload-area {
     border: 2px dashed var(--brand-border); border-radius: 16px;
     padding: 36px 20px; text-align: center; cursor: pointer;
@@ -95,6 +99,7 @@
     border-radius: 999px; min-height: 22px;
   }
 
+  /* ── Paste ── */
   .paste-label {
     font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.07em; color: var(--text-muted); display: block; margin-bottom: 8px;
@@ -109,6 +114,7 @@
   .paste-box:focus { outline: none; border-color: var(--brand); }
   .paste-box::placeholder { color: var(--text-muted); opacity: 0.7; }
 
+  /* ── Parse button (secondary style) ── */
   .parse-btn {
     width: 100%; padding: 10px 12px; border-radius: 10px;
     border: 1.5px solid var(--brand-border);
@@ -119,6 +125,7 @@
   }
   .parse-btn:hover { background: var(--brand-light); border-color: var(--brand); }
 
+  /* ── Preview panel ── */
   .paste-preview {
     display: none; background: var(--panel-bg);
     border: 1px solid var(--panel-border); border-radius: 12px;
@@ -156,11 +163,15 @@
     border-bottom: 1px solid rgba(231,15,103,0.05); white-space: nowrap;
   }
   .preview-table tr:last-child td { border-bottom: none; }
-  .tag { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 0.65rem; font-weight: 600; }
+  .tag {
+    display: inline-block; padding: 1px 7px; border-radius: 999px;
+    font-size: 0.65rem; font-weight: 600;
+  }
   .tag-ok   { background: var(--green-bg); color: var(--green); }
   .tag-out  { background: #f0f4ff; color: #3355cc; }
   .tag-miss { background: #fff0f6; color: var(--brand); }
 
+  /* ── Mapping panel ── */
   .mapping-panel {
     display: none; background: var(--panel-bg);
     border: 1px solid var(--panel-border); border-radius: 16px;
@@ -211,33 +222,7 @@
   .field-select.matched   { border-color: var(--green); background: var(--green-bg); }
   .field-select.unmatched { border-color: rgba(231,15,103,0.35); background: #fff8fb; }
 
-  /* ── Dedupe toggle ── */
-  .dedupe-row {
-    display: flex; align-items: center; gap: 12px;
-    background: var(--brand-faint); border: 1.5px solid var(--brand-border);
-    border-radius: 12px; padding: 13px 16px; margin-bottom: 16px;
-    cursor: pointer; transition: background 0.15s;
-  }
-  .dedupe-row:hover { background: var(--brand-light); }
-  .dedupe-row input[type="checkbox"] {
-    width: 17px; height: 17px; accent-color: var(--brand);
-    cursor: pointer; flex-shrink: 0; margin: 0;
-  }
-  .dedupe-row label {
-    font-size: 0.84rem; font-weight: 600; color: var(--text-dark);
-    cursor: pointer; line-height: 1.3; user-select: none;
-  }
-  .dedupe-row label small {
-    display: block; font-size: 0.72rem; font-weight: 400;
-    color: var(--text-muted); margin-top: 2px;
-  }
-  .dedupe-pill {
-    margin-left: auto; flex-shrink: 0;
-    background: var(--brand); color: #fff;
-    font-size: 0.62rem; font-weight: 700; letter-spacing: 0.07em;
-    text-transform: uppercase; padding: 3px 9px; border-radius: 999px;
-  }
-
+  /* ── Run button ── */
   button.run {
     width: 100%; padding: 15px; background: var(--brand);
     color: #fff; border: none; border-radius: 13px;
@@ -270,6 +255,33 @@
     font-size: 0.55rem; font-weight: 800; color: #fff; margin-top: 1px;
   }
   .rule-dot.dedup-dot { background: #7c3aed; }
+
+  /* ── Dedupe toggle ── */
+  .dedupe-row {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--brand-faint); border: 1.5px solid var(--brand-border);
+    border-radius: 12px; padding: 13px 16px; margin-bottom: 16px;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .dedupe-row:hover { background: var(--brand-light); }
+  .dedupe-row input[type="checkbox"] {
+    width: 17px; height: 17px; accent-color: var(--brand);
+    cursor: pointer; flex-shrink: 0; margin: 0;
+  }
+  .dedupe-row label {
+    font-size: 0.84rem; font-weight: 600; color: var(--text-dark);
+    cursor: pointer; line-height: 1.3; user-select: none;
+  }
+  .dedupe-row label small {
+    display: block; font-size: 0.72rem; font-weight: 400;
+    color: var(--text-muted); margin-top: 2px;
+  }
+  .dedupe-pill {
+    margin-left: auto; flex-shrink: 0;
+    background: var(--brand); color: #fff;
+    font-size: 0.62rem; font-weight: 700; letter-spacing: 0.07em;
+    text-transform: uppercase; padding: 3px 9px; border-radius: 999px;
+  }
 </style>
 </head>
 <body>
@@ -329,7 +341,7 @@ Examples:
     </div>
   </div>
 
-  <!-- MAPPING PANEL -->
+  <!-- MAPPING PANEL (shared) -->
   <div class="mapping-panel" id="mappingPanel">
     <div class="panel-title">Column Mapping</div>
     <div class="legend">
@@ -368,7 +380,7 @@ Examples:
   <details>
     <summary>Output format rules</summary>
     <div class="rules-grid">
-      <div class="rule"><div class="rule-dot dedup-dot">✦</div><strong>Duplicate removal:</strong> when enabled, rows sharing the same square footage, desk count, price, office position, and availability are collapsed to a single row. Only the first occurrence is kept; the rest are silently dropped.</div>
+      <div class="rule"><div class="rule-dot dedup-dot">✦</div><strong>Duplicate removal:</strong> rows sharing the same square footage, desk count, price, office position, and availability are collapsed to one. Only the first occurrence is kept.</div>
       <div class="rule"><div class="rule-dot">✓</div>Output matches template: Floor · Office/Unit Number · Square footage · Desk capacity · Price per month · Floor · Min term · Max term · Available from · What's included · What's not included · Office position · Number of additional rooms</div>
       <div class="rule"><div class="rule-dot">✓</div>What's included: always "* [Office/Unit Number]"</div>
       <div class="rule"><div class="rule-dot">✓</div>Prices always rounded up to the nearest whole pound. Decimals and commas stripped.</div>
@@ -398,6 +410,7 @@ const OUTPUT_KEYS = [
   "included","not_included","position","extra_rooms"
 ];
 
+// All output fields with detection patterns for column auto-matching
 const FIELD_DEFS = [
   { key:'unit', label:'Office / Unit Number', sub:'suite, office no., unit name, reference…', required:true, patterns:[
     /^office\s*number$/i,/^office\s*no\.?$/i,/^unit\s*name$/i,/^unit\s*no\.?$/i,
@@ -460,13 +473,16 @@ const FIELD_DEFS = [
   ]}
 ];
 
+// Noise patterns to skip when looking for building names
 const NOISE = /photo|brochure|commission|discount|incentive|@|website|google\s*map|360|http|www\.|floor\s*plan|enquir|mbps|vat|pcm|per\s*(month|desk|sqft|annum|sq)|prices?\s*from|offices?\s*from|£\d|\*{2}|^\d+(\.\d+)?$|^[A-Z]{1,2}\d{1,2}\s*\d[A-Z]{2}$/i;
 
+// ─── State ────────────────────────────────────────────────────────────────────
 let parsedRows = [], allHeaders = [], fieldMap = {};
 let currentPreviewMode = 'output';
 let _renderPreview = null;
 let activeTab = 'paste';
 
+// ─── Tab switching ─────────────────────────────────────────────────────────────
 function switchTab(tab) {
   activeTab = tab;
   document.querySelectorAll('.tab').forEach((t, i) => {
@@ -481,6 +497,7 @@ function switchTab(tab) {
   document.getElementById('pastePreview').style.display = 'none';
 }
 
+// ─── Cell classifier (used for headerless column inference) ───────────────────
 function classifyCell(v) {
   const s = String(v || '').trim();
   if (!s) return 'empty';
@@ -488,8 +505,9 @@ function classifyCell(v) {
   const noComma = s.replace(/,/g, '');
   if (/^\d{1,5}$/.test(noComma)) {
     const n = parseInt(noComma, 10);
-    if (n >= 1 && n <= 150) return 'small_int';
-    if (n > 150 && n <= 99999) return 'large_int';
+    // Heuristic: ≤150 → likely desk count; >150 → likely sqft or price
+    if (n >= 1 && n <= 150) return 'small_int';   // desks
+    if (n > 150 && n <= 99999) return 'large_int'; // sqft
     return 'int';
   }
   if (/^[\d,]+(\.\d+)?$/.test(s)) return 'number';
@@ -497,7 +515,7 @@ function classifyCell(v) {
   if (/\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}/.test(s) || /\d{4}-\d{2}-\d{2}/.test(s)) return 'available';
   if (/^(ground|basement|lower\s*ground|mezzanine|lg|[gblm])$/i.test(s)) return 'floor';
   if (/^(floor\s*\d|\d+(st|nd|rd|th)\s*floor|level\s*\d)/i.test(s)) return 'floor';
-  if (/^(internal|interior|external|window)$/i.test(s)) return 'position';
+  if (/^(internal|interior|external|exterior|window(\s*view)?|borrowed\s*light|no\s*window|no\s*natural\s*light)$/i.test(s)) return 'position';
   if (/\d+\s*(?:sq\.?\s*ft|sqft|sf\b|m2|sqm)/i.test(s)) return 'sqft_labeled';
   if (/^[a-zA-Z]?\d{1,4}[a-zA-Z]?$/.test(s) || /^(unit|office|suite|room)\s*\S+/i.test(s)) return 'ref';
   return 'text';
@@ -505,6 +523,8 @@ function classifyCell(v) {
 
 function inferAndAssignColumns(dataRows) {
   const numCols = Math.max(...dataRows.map(r => r.length));
+
+  // Pass 1: collect dominant type + numeric stats for every column
   const colStats = [];
   for (let c = 0; c < numCols; c++) {
     const vals = dataRows.map(r => (r[c] || '').trim()).filter(Boolean);
@@ -523,8 +543,11 @@ function inferAndAssignColumns(dataRows) {
     const unique = vals.length ? new Set(vals).size / vals.length : 0;
     colStats.push({ type:dominant, avg, max, unique });
   }
+
+  // Pass 2A: assign unambiguous non-numeric types left-to-right
   const assignment = {};
   const taken = f => Object.values(assignment).includes(f);
+
   colStats.forEach(({ type }, c) => {
     if (assignment[c]) return;
     if ((type==='ref'||type==='text') && !taken('unit'))   { assignment[c]='unit';      return; }
@@ -534,84 +557,131 @@ function inferAndAssignColumns(dataRows) {
     if (type==='price'     && !taken('price'))             { assignment[c]='price';     return; }
     if (type==='sqft_labeled' && !taken('sqft'))           { assignment[c]='sqft';      return; }
   });
+
+  // Pass 2B: numeric columns — sorted by max ascending so the smallest-valued column
+  // is evaluated first (important for floor vs desk disambiguation below).
   const hasPositionCol = taken('position');
   const numericCols = colStats
     .map((s, c) => ({ ...s, c }))
-    .filter(({ c, type }) => !assignment[c] && ['small_int','large_int','int','number'].includes(type))
+    .filter(({ c, type }) =>
+      !assignment[c] && ['small_int','large_int','int','number'].includes(type)
+    )
     .sort((a, b) => a.max - b.max);
+
+  // Does at least one numeric column have max > 5?
+  // If yes, a column with max ≤ 5 is probably a floor number (1,2,3,4,5), not a desk count.
+  // Exception: if a position column was already found (Interior/Window etc.), the data uses
+  // position type instead of floor numbers — so small integers are desk counts not floors.
   const hasLargerNumeric = numericCols.some(({ max }) => max > 5);
-  const DESK_THRESHOLD = 25;
+  const DESK_THRESHOLD = 25; // avg ≤ 25 → desks; avg > 25 → sqft
+
   numericCols.forEach(({ c, avg, max, unique }) => {
-    if (!hasPositionCol && max <= 5 && hasLargerNumeric && !taken('floor')) { assignment[c] = 'floor'; return; }
+    // Floor detection: only when no position column exists AND other larger numeric
+    // columns are present AND this column's max is very small (floor 1-5)
+    if (!hasPositionCol && max <= 5 && hasLargerNumeric && !taken('floor')) {
+      assignment[c] = 'floor'; return;
+    }
+    // Desk vs sqft: use average value as primary signal
     if (avg <= DESK_THRESHOLD && !taken('desks')) { assignment[c] = 'desks'; return; }
     if (avg > DESK_THRESHOLD  && !taken('sqft'))  { assignment[c] = 'sqft';  return; }
     if (avg > DESK_THRESHOLD  && !taken('price')) { assignment[c] = 'price'; return; }
+    // Fallbacks
     if (!taken('unit') && unique > 0.7) { assignment[c] = 'unit'; return; }
     if (!taken('desks')) { assignment[c] = 'desks'; return; }
     if (!taken('sqft'))  { assignment[c] = 'sqft'; }
   });
+
+  // Last resort: no unit column found — take first unassigned column
   if (!taken('unit')) {
     const first = colStats.findIndex((_, c) => !assignment[c]);
     if (first >= 0) assignment[first] = 'unit';
   }
+
   return assignment;
 }
 
+// ─── Line splitter ─────────────────────────────────────────────────────────────
 function splitLine(line) {
   if (line.includes('\t')) return line.split('\t').map(c => c.trim());
+  // Split on 2+ spaces
   return line.split(/  +/).map(c => c.trim());
 }
 
+// ─── Free-text single-line regex parser ────────────────────────────────────────
 function parseFreeTextLine(line) {
   if (!line.trim()) return null;
   const result = {};
   let rem = line.trim();
+
+  // Price
   const priceRe  = /([£$€])\s*([\d,]+(?:\.\d+)?)\s*(?:\/\s*(?:month|mo|mth)|pcm|p\.?m\.?|per\s+month)?/i;
   const priceRe2 = /([\d,]+(?:\.\d+)?)\s*(?:\/\s*(?:month|mo|mth)|pcm|p\.?m\.|per\s+month)/i;
   let pm = rem.match(priceRe) || rem.match(priceRe2);
   if (pm) { result.price = pm[0]; rem = rem.replace(pm[0], '|||'); }
+
+  // Square footage (must have unit suffix — never a bare number)
   const sfRe = /([\d,]+(?:\.\d+)?)\s*(?:sq\.?\s*ft\.?|sqft|square\s*feet|sf\b|sq\.?\s*m\.?|sqm|m2)/i;
   const sm = rem.match(sfRe);
   if (sm) { result.sqft = sm[0]; rem = rem.replace(sm[0], '|||'); }
+
+  // Floor
   const flRe = /\b(?:floor\s*(\d+|[a-z]+)|(\d+)(?:st|nd|rd|th)\s*floor|ground\s*floor|lower\s*ground|basement|level\s*(\d+|[a-z]+))\b/i;
   const fm = rem.match(flRe);
   if (fm) { result.floor = fm[0]; rem = rem.replace(fm[0], '|||'); }
+
+  // Availability
   const avRe  = /(?:available\s*(?:from)?\s*|from\s*)([a-z]+\s*\d{0,4}|\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4})/i;
   const avRe2 = /\b(now|immediately|jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)(?:\s+\d{4})?\b/i;
   const am = rem.match(avRe) || rem.match(avRe2);
   if (am) { result.available = am[0]; rem = rem.replace(am[0], '|||'); }
+
+  // Position
   const posM = rem.match(/\b(internal|interior|external|window)\b/i);
   if (posM) {
+    // Normalise to output values immediately so the preview shows correctly
     const raw = posM[1].toLowerCase();
     result.position = (raw==='internal'||raw==='interior') ? 'Internal' : 'Window';
     rem = rem.replace(posM[0], '|||');
   }
+
+  // Additional rooms
   const mrM = rem.match(/\+\s*(\d+)?\s*(m\.?r\.?s?|meeting\s*room(?:s)?|boardroom(?:s)?)/i);
   if (mrM) { result.extra_rooms = mrM[1] || '1'; rem = rem.replace(mrM[0], '|||'); }
+
+  // What's left = office label / unit number
   const unitRaw = rem.replace(/\|{3}/g, ' ').replace(/\s+/g, ' ')
     .replace(/^[\s\-–—:,]+|[\s\-–—:,]+$/g, '').trim();
   if (unitRaw) result.unit = unitRaw;
+
+  // Desk count — from explicit "N person/desk" label only
   const deskM = (result.unit || line).match(/^(\d+)\s*(?:persons?|peoples?|desks?|seats?|pax)\b/i);
   if (deskM) result.desks = deskM[1];
+
   return (result.unit || result.price || result.sqft) ? result : null;
 }
 
+// ─── Parse pasted text ─────────────────────────────────────────────────────────
 function parsePaste() {
   const text = document.getElementById('pasteBox').value.trim();
   if (!text) { setStatus('Please paste some data first.', 'error'); return; }
+
   const rawLines = text.split('\n').map(l => l.trimEnd()).filter(l => l.trim());
   const splitLines = rawLines.map(splitLine);
   const maxCols = Math.max(...splitLines.map(r => r.length));
   const isColumnar = maxCols >= 2;
+
   fieldMap = {};
   let dataLines = splitLines;
   let hasHeaders = false;
+
   if (isColumnar) {
     const firstRow = splitLines[0];
     const headerHits = firstRow.filter(c =>
       /office|unit|suite|ref|floor|desk|sqft|sq\s*ft|price|pcm|cost|monthly|available|from|avail|size|number|notes|comments|capacity|people/i.test(c)
     );
+
     if (headerHits.length >= 2) {
+      // Header row detected
       hasHeaders = true;
       dataLines = splitLines.slice(1);
       const headers = firstRow.map(h => h.trim());
@@ -621,19 +691,24 @@ function parsePaste() {
       });
       allHeaders = headers;
     } else {
+      // No headers — infer from data
       const assignment = inferAndAssignColumns(splitLines);
       Object.entries(assignment).forEach(([ci, key]) => { fieldMap[key] = parseInt(ci); });
       allHeaders = splitLines[0].map((_, i) => `__col${i}__`);
     }
+
     parsedRows = dataLines.filter(r => r.some(c => c.trim())).map(cols => {
       const obj = { __building__: '' };
       allHeaders.forEach((h, i) => { obj[h] = (cols[i] || '').trim(); });
       return obj;
     });
+
     const pasteAutoMap = {};
     Object.entries(fieldMap).forEach(([key, ci]) => { pasteAutoMap[key] = allHeaders[ci]; });
     buildUI(allHeaders, pasteAutoMap, true);
+
   } else {
+    // Single-column free-text — regex per line
     const results = rawLines.map(parseFreeTextLine).filter(Boolean);
     if (!results.length) { setStatus('Could not detect any office data.', 'error'); return; }
     allHeaders = ['__unit__','__price__','__sqft__','__floor__','__available__','__desks__','__position__','__extra_rooms__'];
@@ -648,12 +723,14 @@ function parsePaste() {
     buildUI(allHeaders, autoMap, true);
     fieldMap = { unit:0, price:1, sqft:2, floor:3, available:4, desks:5, position:6, extra_rooms:7 };
   }
+
   buildPreview();
   document.getElementById('pastePreview').style.display = 'block';
   document.getElementById('runBtn').disabled = false;
   setStatus(`Parsed ${parsedRows.length} row${parsedRows.length!==1?'s':''} — ${hasHeaders?'headers detected':'columns auto-inferred'}. Review and convert.`);
 }
 
+// ─── Preview ────────────────────────────────────────────────────────────────────
 const RAW_COLS = [
   {key:'unit', label:'Unit No.'},  {key:'floor', label:'Floor'},
   {key:'sqft', label:'Sq Ft'},     {key:'desks', label:'Desks'},
@@ -704,13 +781,17 @@ function computeOutputRow(row) {
   };
 }
 
-function buildPreview() { _renderPreview = renderPreviewTable; renderPreviewTable(); }
+function buildPreview() {
+  _renderPreview = renderPreviewTable;
+  renderPreviewTable();
+}
 
 function renderPreviewTable() {
   const isOut = currentPreviewMode === 'output';
   document.getElementById('btnRaw').classList.toggle('active', !isOut);
   document.getElementById('btnOut').classList.toggle('active', isOut);
   document.getElementById('previewCount').textContent = parsedRows.length;
+
   if (isOut) {
     document.getElementById('previewHead').innerHTML = OUT_COLS.map(c => `<th>${c}</th>`).join('');
     document.getElementById('previewBody').innerHTML = parsedRows.slice(0, 8).map(row => {
@@ -734,8 +815,12 @@ function renderPreviewTable() {
     document.getElementById('previewBody').innerHTML += `<tr><td colspan="${cols}" style="color:var(--text-muted);font-size:0.72rem;padding:6px 8px">…and ${parsedRows.length-8} more rows</td></tr>`;
 }
 
-function setPreviewMode(mode) { currentPreviewMode = mode; if (_renderPreview) _renderPreview(); }
+function setPreviewMode(mode) {
+  currentPreviewMode = mode;
+  if (_renderPreview) _renderPreview();
+}
 
+// ─── File loading (xlsx / csv) ─────────────────────────────────────────────────
 document.getElementById('fileInput').addEventListener('change', e => { const f = e.target.files[0]; if (f) loadFile(f); });
 const dz = document.getElementById('dropZone');
 dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
@@ -784,7 +869,8 @@ function extractFromXlsx(wb) {
   }
   function cellStr(v) {
     if (v===null||v===undefined) return '';
-    if (v instanceof Date || (typeof v==='string'&&/^\d{4}-\d{2}-\d{2}/.test(v))) return fmtDate(new Date(v));
+    if (v instanceof Date || (typeof v==='string'&&/^\d{4}-\d{2}-\d{2}/.test(v)))
+      return fmtDate(new Date(v));
     return String(v).trim();
   }
   const allRows = [];
@@ -832,7 +918,8 @@ function extractFromXlsx(wb) {
   if (!allRows.length) return null;
   const hSet = new Set();
   allRows.forEach(r => Object.keys(r).forEach(k => { if (!k.startsWith('__')) hSet.add(k); }));
-  return { headers: [...hSet], rows: allRows };
+  const headers = [...hSet];
+  return { headers, rows: allRows };
 }
 
 function parseCSV(text) {
@@ -848,6 +935,7 @@ function parseCSV(text) {
   return rows;
 }
 
+// ─── Column detection from headers ────────────────────────────────────────────
 function detectColumns(headers) {
   const m = {};
   FIELD_DEFS.forEach(f => {
@@ -858,6 +946,7 @@ function detectColumns(headers) {
   return m;
 }
 
+// ─── Build mapping UI ──────────────────────────────────────────────────────────
 function buildUI(headers, mapping, isPasteMode) {
   const inferLabel = h => {
     const entry = Object.entries(mapping).find(([,v]) => v===h);
@@ -867,6 +956,7 @@ function buildUI(headers, mapping, isPasteMode) {
   const cleanHdrs = headers.filter(h => h);
   const opts = `<option value="">— not in file —</option>` +
     cleanHdrs.map(h => `<option value="${esc(h)}">${inferLabel(h)}</option>`).join('');
+
   const container = document.getElementById('mappingRows');
   container.innerHTML = '';
   FIELD_DEFS.forEach(f => {
@@ -887,6 +977,7 @@ function buildUI(headers, mapping, isPasteMode) {
       if (_renderPreview) _renderPreview();
     });
   });
+
   const groupSel = document.getElementById('groupByCol');
   if (isPasteMode) {
     groupSel.innerHTML = `<option value="">— No grouping (single CSV) —</option>`;
@@ -905,11 +996,12 @@ function getMapping() {
   return m;
 }
 
+// ─── Transformers ──────────────────────────────────────────────────────────────
 function cleanUnitRef(raw) {
   return (raw||'')
-    .replace(/[^a-zA-Z0-9 \-\/\.]/g, '')
-    .replace(/[\-\/\. ]+$/, '')
-    .replace(/^[\-\/\. ]+/, '')
+    .replace(/[^a-zA-Z0-9 \-\/\.]/g, '')   // keep alphanums + hyphen, slash, dot, space
+    .replace(/[\-\/\. ]+$/, '')             // strip trailing
+    .replace(/^[\-\/\. ]+/, '')             // strip leading
     .trim();
 }
 
@@ -949,27 +1041,32 @@ function parseSqft(raw) {
   return isSqm ? Math.ceil(n * 10.764) : Math.ceil(n);
 }
 
+// Desk resolution: column value → unit name pattern → sqft fallback
 function resolveDesks(rawDesks, unitRef, sqft) {
+  // 1. From dedicated desk column (strip +MR annotations first)
   if (rawDesks) {
     const clean = cleanDeskValue(rawDesks);
     const n = parseInt(String(clean).replace(/[^0-9]/g,''), 10);
     if (!isNaN(n) && n > 0) return n;
   }
+  // 2. From unit name: "2 Person Office" → 2
   if (unitRef) {
     const dm = unitRef.match(/^(\d+)\s*(?:persons?|peoples?|desks?|workstations?|seats?)/i);
     if (dm) return parseInt(dm[1], 10);
   }
+  // 3. Sqft fallback (industry standard: ~50 sqft per desk)
+  //    Only use if sqft looks like a room size (not a tiny number)
   if (sqft > 40) return Math.ceil(sqft / 50);
   return '';
 }
 
 function cleanDeskValue(raw) {
   return String(raw || '')
-    .replace(/\s*\/.*$/, '')
-    .replace(/\s*\+\s*\d*\s*(?:m\.?r\.?s?|meeting\s*rooms?|boardrooms?).*/i, '')
+    .replace(/\s*\/.*$/, '')                                               // remove "/ 22 open" alternates
+    .replace(/\s*\+\s*\d*\s*(?:m\.?r\.?s?|meeting\s*rooms?|boardrooms?).*/i, '') // remove +MR
     .replace(/\s*\+\s*(?:boardroom|meeting\s*room|m\.?r\.?)b.*/i, '')
-    .replace(/\s*–.*/g, '')
-    .replace(/\s*\(.*\)/g, '')
+    .replace(/\s*–.*/g, '')                                                // remove "– terrace…"
+    .replace(/\s*\(.*\)/g, '')                                             // remove "(6pax)"
     .replace(/\s*with\s+.*/i, '')
     .trim();
 }
@@ -1023,6 +1120,7 @@ function getBuilding(row, groupByCol, m) {
   if (groupByCol && groupByCol !== '__auto__') return (row[groupByCol]||'').trim() || 'Unknown';
   if (row.__building__ && row.__building__.trim()) return row.__building__.trim();
   if (m.building && row[m.building] && row[m.building].trim()) {
+    // For Beaumont-style "Farringdon - 6 Snow Hill…" → extract just "Farringdon"
     const full = row[m.building].trim();
     const stripped = full.match(/^(.+?)\s*-\s*\d+/);
     return stripped ? stripped[1].trim() : full;
@@ -1032,6 +1130,7 @@ function getBuilding(row, groupByCol, m) {
   return 'All';
 }
 
+// ─── CSV export ────────────────────────────────────────────────────────────────
 function toCSVString(rows) {
   return rows.map(r => r.map(cell => {
     const s = String(cell ?? '');
@@ -1050,7 +1149,7 @@ async function convert() {
     const m = getMapping();
     const groupByCol = document.getElementById('groupByCol').value;
     const hostName = (document.getElementById('hostName').value.trim()) || 'Host';
-    const dedupeEnabled = document.getElementById('dedupeCheck').checked;
+    const useAnnual = !!m.annual_price && !m.price;
 
     const groups = {};
 
@@ -1068,37 +1167,44 @@ async function convert() {
       const rawPrice = getF('price') || getF('annual_price');
       const isAnn = !getF('price') && !!getF('annual_price');
       const price = parsePrice(rawPrice, isAnn);
+
       const sqft = parseSqft(getF('sqft'));
       const rawDesks = getF('desks');
       const desks = resolveDesks(rawDesks, unitRef, sqft);
+
       const notesVal = getF('notes');
       const posVal   = getF('position');
       const roomsVal = getF('extra_rooms');
 
       groups[building].push({
-        floor:       parseFloor(getF('floor')),
-        unit:        unitRef,
-        sqft:        sqft || '',
+        floor:     parseFloor(getF('floor')),
+        unit:      unitRef,
+        sqft:      sqft || '',
         desks,
         price,
-        min_term:    '',
-        max_term:    '',
-        available:   parseAvailableFrom(getF('available')),
-        included:    unitRef ? `* ${unitRef}` : '',
-        not_included:'',
-        position:    detectPosition(notesVal, posVal),
+        min_term:  '',
+        max_term:  '',
+        available: parseAvailableFrom(getF('available')),
+        included:  unitRef ? `* ${unitRef}` : '',
+        not_included: '',
+        position:  detectPosition(notesVal, posVal),
         extra_rooms: extractExtraRooms(notesVal, roomsVal, rawDesks)
       });
     });
 
+    const gNames = Object.keys(groups);
+    const totalRows = Object.values(groups).reduce((s,g) => s+g.length, 0);
+    if (!gNames.length || totalRows === 0)
+      throw new Error('No rows found. Check the Office/Unit Number column is correctly mapped.');
+
     // ── Deduplication ──────────────────────────────────────────────────────────
-    // Two rows are considered duplicates if they share the same sqft, desk count,
-    // price, office position, AND available-from date. The unit number is intentionally
-    // excluded from the key so that "Office 35" and "Office 41" — both 97 sqft, 1 desk,
-    // £970, Interior, Now — are treated as the same listing and collapsed to one row.
+    // Two rows are duplicates when they share sqft + desks + price + position +
+    // available. The unit number is excluded from the key so that e.g. "Office 35"
+    // and "Office 41" (both 97 sqft, 1 desk, £970, Interior, Now) collapse to one.
+    const dedupeEnabled = document.getElementById('dedupeCheck').checked;
     let totalRemoved = 0;
     if (dedupeEnabled) {
-      Object.keys(groups).forEach(g => {
+      gNames.forEach(g => {
         const seen = new Set();
         const before = groups[g].length;
         groups[g] = groups[g].filter(row => {
@@ -1116,19 +1222,13 @@ async function convert() {
         totalRemoved += before - groups[g].length;
       });
     }
-
-    const gNames = Object.keys(groups);
-    const totalRows = Object.values(groups).reduce((s,g) => s+g.length, 0);
-    if (!gNames.length || totalRows === 0)
-      throw new Error('No rows found. Check the Office/Unit Number column is correctly mapped.');
+    const dupeNote = dedupeEnabled && totalRemoved > 0
+      ? ` (${totalRemoved} duplicate${totalRemoved !== 1 ? 's' : ''} removed)`
+      : '';
 
     const d = TODAY;
     const date = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
     const buildCSV = records => [OUTPUT_HEADERS, ...records.map(r => OUTPUT_KEYS.map(k => r[k] ?? ''))];
-
-    const dupeNote = dedupeEnabled && totalRemoved > 0
-      ? ` (${totalRemoved} duplicate${totalRemoved!==1?'s':''} removed)`
-      : '';
 
     if (gNames.length === 1) {
       const blob = new Blob([toCSVString(buildCSV(groups[gNames[0]]))], { type:'text/csv' });
