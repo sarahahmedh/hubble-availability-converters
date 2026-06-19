@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
+<!-- saved from url=(0087)https://sarahahmedh.github.io/hubble-availability-converters/Workspace%20Converter.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <title>Workspace Availability Converter</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="./Workspace Availability Converter_files/jszip.min.js.download"></script>
 <style>  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -85,8 +85,8 @@
 </head>
 <body>
 <div class="top-nav">
-  <a class="wordmark" href="index.html"><div class="wordmark-dot"></div>Hubble Tools</a>
-  <a class="back-link" href="index.html">← Back to all tools</a>
+  <a class="wordmark" href="https://sarahahmedh.github.io/hubble-availability-converters/index.html"><div class="wordmark-dot"></div>Hubble Tools</a>
+  <a class="back-link" href="https://sarahahmedh.github.io/hubble-availability-converters/index.html">← Back to all tools</a>
 </div>
 <div class="header">
   <div class="badge">Step 2 · Workspace</div>
@@ -94,17 +94,17 @@
   <p class="sub">Converts host drop sheet → Django compatible CSV for upload</p>
 </div>
 <div class="card">
-  <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+  <div class="upload-area" id="dropZone" onclick="document.getElementById(&#39;fileInput&#39;).click()">
     <div class="upload-icon">📂</div>
     <p><strong>Click to upload</strong> or drag &amp; drop</p>
     <p>Workspace Drop Sheet .csv file</p>
     <div class="file-name" id="fileName"></div>
     <input type="file" id="fileInput" accept=".csv">
   </div>
-  <button class="run" id="runBtn" disabled onclick="convert()">Convert &amp; Download</button>
+  <button class="run" id="runBtn" disabled="" onclick="convert()">Convert &amp; Download</button>
   <div class="status" id="status"></div>
   <div class="divider"></div>
-  <details>
+  <details open="">
     <summary>Applied rules</summary>
     <div class="rules-grid">
       <div class="rule"><div class="rule-dot">✓</div>One CSV per building (Property), zipped</div>
@@ -113,7 +113,7 @@
       <div class="rule"><div class="rule-dot">✓</div>Price per month ← ASK NetRSC PCM (number only, no £ or commas)</div>
       <div class="rule"><div class="rule-dot">✓</div>Desk capacity: ceil(Sq. Ft. / 50)</div>
       <div class="rule"><div class="rule-dot">✓</div>Available from ← Available Text (yyyy-mm-dd, future dates only)</div>
-      <div class="rule"><div class="rule-dot">✓</div>What's not included: "Business rates of £X per month" ← Rates Payable ÷ 12</div>
+      <div class="rule"><div class="rule-dot">✓</div>What's not included: "Business rates of £X per month" ← Rates Payable (number only)</div>
       <div class="rule"><div class="rule-dot">✓</div>Min term: 6 months | Max term: empty</div>
     </div>
   </details>
@@ -132,7 +132,7 @@ function parseCSV(text){const rows=[];let row=[],cell='',inQ=false;for(let i=0;i
 function parseFloor(r){if(!r||!String(r).trim())return '';const s=String(r).trim(),l=s.toLowerCase();if(l==='g'||l==='ground')return 'Ground';if(l==='lg'||l==='lower ground'||l==='lower-ground')return 'Lower Ground';if(l==='b'||l==='basement')return 'Basement';const n=parseInt(s.replace(/[^0-9-]/g,''),10);return isNaN(n)?s:n;}
 function parsePrice(r){if(!r)return '';const n=parseFloat(String(r).replace(/[£,\s]/g,''));return isNaN(n)?'':Math.ceil(n);}
 function parseAvail(r){if(!r)return '';const s=String(r).trim();if(!s||/now|enquire|enquiry|tbc|tba/i.test(s))return '';const d=new Date(s);d.setHours(0,0,0,0);if(isNaN(d.getTime())||d<=TODAY)return '';return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
-function parseRates(r){if(!r)return '';const n=parseFloat(String(r).replace(/[£,\s]/g,''));if(isNaN(n))return '';return 'Business rates of £'+Math.ceil(n/12)+' per month';}
+function parseRates(r){if(!r)return '';const n=parseFloat(String(r).replace(/[£,\s]/g,''));if(isNaN(n))return '';return 'Business rates of £'+Math.ceil(n)+' per month';}
 function toCSV(rows){return rows.map(r=>r.map(c=>{const s=String(c??'');return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\r\n');}
 async function convert(){if(!csvText)return;const btn=document.getElementById('runBtn'),st=document.getElementById('status');btn.disabled=true;st.textContent='Processing...';st.className='status';try{const rows=parseCSV(csvText);if(rows.length<2)throw new Error('File appears empty.');const headers=rows[0].map(h=>h.trim());const data=rows.slice(1).filter(r=>r.some(c=>c!==''));
 // hi() finds the first matching column name (case-insensitive), supporting
@@ -143,5 +143,6 @@ const hi=(...names)=>{for(const n of names){const i=headers.findIndex(h=>h.toLow
 const iRef=hi('Unit Ref','Reference'),iProp=hi('Building','Property'),iFloor=hi('Floor'),iSqft=hi('Sq. Ft.'),iPrice=hi('PCM (£)','ASK NetRSC PCM'),iAvail=hi('Available Text'),iRates=hi('Rates p/m (£)','Rates Payable'),iComments=hi('Comments');
 const buildings={};data.forEach(row=>{const b=iProp>=0?String(row[iProp]||'').trim():'Unknown';if(!b)return;if(!buildings[b])buildings[b]=[];const sq=parseFloat(String(row[iSqft]||'').replace(/[,\s]/g,''))||0,ref=iRef>=0?String(row[iRef]||'').trim():'';buildings[b].push({"Office/Unit Number":ref,"Floor":iFloor>=0?parseFloor(row[iFloor]):'',"Square footage":sq||'',"Price per month":iPrice>=0?parsePrice(row[iPrice]):'',"Desk capacity":sq>0?Math.ceil(sq/50):'',"Available from":iAvail>=0?parseAvail(row[iAvail]):'',"Min term (months)":6,"Max term (months)":'',"What's included":ref?'- Office - '+ref:'',"What's not included":iRates>=0?parseRates(row[iRates]):'',"Notes":iComments>=0?String(row[iComments]||'').trim():''});});const names=Object.keys(buildings);if(!names.length)throw new Error('No building data found.');const zip=new JSZip();names.forEach(n=>{const csvRows=[OUTPUT_HEADERS,...buildings[n].map(r=>OUTPUT_HEADERS.map(h=>r[h]??''))];zip.file(n.replace(/[:\/\?*\[\]<>|]/g,'').trim()+'.csv',toCSV(csvRows));});const d=TODAY,date=String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear();const blob=await zip.generateAsync({type:'blob'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Django Ready Building Output - Host Workspace - Date '+date+'.zip';a.click();URL.revokeObjectURL(url);st.textContent='✓ Done — '+names.length+' CSVs downloaded.';st.className='status success';}catch(err){st.textContent='Error: '+err.message;st.className='status error';}btn.disabled=false;}
 </script>
-</body>
-</html>
+
+
+</body></html>
