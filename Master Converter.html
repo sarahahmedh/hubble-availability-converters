@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1080,13 +1081,13 @@ function buildUI(headers, mapping, isPasteMode) {
   });
 
   const groupSel = document.getElementById('groupByCol');
-  if (isPasteMode) {
-    groupSel.innerHTML = `<option value="">— No grouping (single CSV) —</option>`;
+  groupSel.innerHTML = `<option value="__auto__">— Auto-detect building —</option>
+    <option value="">— No grouping (single CSV) —</option>` +
+    cleanHdrs.map(h => `<option value="${esc(h)}">${h}</option>`).join('');
+  if (mapping.building) {
+    groupSel.value = mapping.building;
   } else {
-    groupSel.innerHTML = `<option value="__auto__">— Auto-detect building —</option>
-      <option value="">— No grouping (single CSV) —</option>` +
-      cleanHdrs.map(h => `<option value="${esc(h)}">${h}</option>`).join('');
-    if (mapping.building) groupSel.value = mapping.building;
+    groupSel.value = '';
   }
   document.getElementById('mappingPanel').style.display = 'block';
 }
@@ -1099,11 +1100,15 @@ function getMapping() {
 
 // ─── Transformers ──────────────────────────────────────────────────────────────
 function cleanUnitRef(raw) {
-  return (raw||'')
+  const cleaned = (raw||'')
     .replace(/[^a-zA-Z0-9 \-\/\.]/g, '')
     .replace(/[\-\/\. ]+$/, '')
     .replace(/^[\-\/\. ]+/, '')
     .trim();
+  if (!cleaned) return '';
+  // If it already starts with a recognised label, leave it alone
+  if (/^(office|unit|suite|room|studio|floor|level|desk|space|shop|lab|loft)\b/i.test(cleaned)) return cleaned;
+  return 'Office ' + cleaned;
 }
 
 function parseFloor(raw) {
