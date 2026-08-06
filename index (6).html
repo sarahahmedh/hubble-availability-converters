@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hubble Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #f9f9f9;
+    color: #1a1a1a;
+    min-height: 100vh;
+    padding: 48px 24px 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  header {
+    width: 100%;
+    max-width: 680px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 56px;
+  }
+  .wordmark {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a1a;
+    letter-spacing: -0.02em;
+  }
+  .wordmark-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e70f67;
+  }
+  .tag {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #e70f67;
+    background: #fde8f1;
+    border-radius: 20px;
+    padding: 4px 12px;
+  }
+  .hero {
+    width: 100%;
+    max-width: 680px;
+    margin-bottom: 48px;
+  }
+  .hero h1 {
+    font-size: 38px;
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 12px;
+    color: #1a1a1a;
+  }
+  .hero h1 strong {
+    font-weight: 600;
+    color: #e70f67;
+  }
+  .hero p {
+    font-size: 14px;
+    color: #888;
+    font-weight: 400;
+    line-height: 1.6;
+    max-width: 420px;
+  }
+  .section-label {
+    width: 100%;
+    max-width: 680px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #bbb;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+  }
+  .tools {
+    width: 100%;
+    max-width: 680px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: #e8e8e8;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .group-label {
+    background: #f4f4f4;
+    padding: 8px 24px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #bbb;
+    border-bottom: 1px solid #e8e8e8;
+  }
+  .tool {
+    background: #fff;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.12s;
+  }
+  .tool:hover { background: #fdf5f9; }
+  .tool:hover .tool-arrow { color: #e70f67; transform: translateX(3px); }
+  .tool-left { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; }
+  .tool-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: #fde8f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+  .tool-info { flex: 1; min-width: 0; }
+  .tool-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1a1a1a;
+    margin-bottom: 2px;
+  }
+  .tool-desc {
+    font-size: 12px;
+    color: #aaa;
+    font-weight: 400;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tool-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .tool-badge {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    background: #f4f4f4;
+    color: #bbb;
+    border-radius: 20px;
+    padding: 3px 10px;
+    white-space: nowrap;
+  }
+  .tool-step {
+    font-size: 10px;
+    font-weight: 500;
+    color: #e70f67;
+    background: #fde8f1;
+    border-radius: 20px;
+    padding: 3px 10px;
+    white-space: nowrap;
+  }
+  .tool-arrow {
+    color: #ddd;
+    font-size: 16px;
+    transition: color 0.15s, transform 0.15s;
+  }
+  footer {
+    width: 100%;
+    max-width: 680px;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    font-size: 11px;
+    color: #ccc;
+    display: flex;
+    justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wordmark">
+    <div class="wordmark-dot"></div>
+    Hubble Tools
+  </div>
+  <div class="tag">Internal</div>
+</header>
+
+<div class="hero">
+  <h1>All your tools,<br><strong>one place.</strong></h1>
+  <p>Internal converters for the Hubble team. Click any tool to open it — everything runs in your browser, nothing is uploaded anywhere.</p>
+</div>
+
+<div class="section-label">
+  <span>Available tools</span>
+  <span>10 tools</span>
+</div>
+
+<div class="tools">
+
+  <div class="group-label">Master</div>
+
+  <a class="tool" href="Master%20Converter.html">
+    <div class="tool-left">
+      <div class="tool-icon">&#9889;</div>
+      <div class="tool-info">
+        <div class="tool-name">Master Converter</div>
+        <div class="tool-desc">Quickly converts availability into a ready-to-upload CSV</div>
+      </div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-badge">.csv</div>
+      <div class="tool-arrow">&#8594;</div>
+    </div>
+  </a>
+
+  <div class="group-label">Fora</div>
+
+  <a class="tool" href="Fora%20Excel%20to%20CSV%20Converter.html">
+    <div class="tool-left">
+      <div class="tool-icon">&#128194;</div>
+      <div class="tool-info">
+        <div class="tool-name">Fora Excel &#8594; CSV</div>
+        <div class="tool-desc">Converts Fora availability .xlsx into a clean CSV ready for the converter</div>
+      </div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-step">Step 1</div>
+      <div class="tool-badge">.xlsx &#8594; .csv</div>
+      <div class="tool-arrow">&#8594;</div>
+    </div>
+  </a>
+
+  <a class="tool" href="Fora%20Availability%20Converter.html">
+    <div class="tool-left">
+      <div class="tool-icon">&#128257;</div>
+      <div class="tool-info">
+        <div class="tool-name">Fora Availability Converter</div>
+        <div class="tool-desc">Converts Fora CSV into Django-ready CSVs, one per building, zipped</div>
+      </div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-step">Step 2</div>
+      <div class="tool-badge">.csv &#8594; .zip</div>
+      <div class="tool-arrow">&#8594;</div>
+    </div>
+  </a>
+
+  <div class="group-label">Workspace</div>
+
+  <a class="tool" href="Workspace%20Converter.html">
+    <div class="tool-left">
+      <div class="tool-icon">&#128257;</div>
+      <div class="tool-info">
+        <div class="tool-name">Workspace Availability Converter</div>
+        <div class="tool-desc">Converts Workspace drop sheet .xlsx into Django-ready CSVs, one per building, zipped</div>
+      </div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-badge">.xlsx &#8594; .zip</div>
+      <div class="tool-arrow">&#8594;</div>
+    </div>
+  </a>
+
+  <div class="group-label">WeWork</div>
+
+  <a class="tool" href="WeWork%20Converter.html">
+    <div class="tool-left">
+      <div class="tool-icon">&#128257;</div>
+      <div class="tool-info">
+        <div class="tool-name">WeWork Converter</div>
+        <div class="tool-desc">Converts WeWork availability data into Django-ready CSV format</div>
+      </div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-badge">.csv</div>
+      <div class="tool-arrow">&#8594;</div>
+    </div>
+  </a>
+
+  <div class="group-label">Elementa</div>
+
+  <a class="tool" href="Elementa%20Workspace%20Availability%20Converter.html">
+    <div class="tool-left">
+      <div class="tool-icon">&#128257;</div>
+      <div class="tool-info">
+        <div class="tool-name">Elementa Availability Converter</div>
+        <div class="tool-desc">Converts Elementa Workspace availability CSV into Django-ready CSVs, one per building, zipped</div>
+      </div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-badge">.csv &#8594; .zip</div>
+      <div class="tool-arrow">&#8594;</div>
+    </div>
+  </a>
+
+  <div class="group-label">Meeting Rooms</div>
+
+  <a class="tool" href="meeting-room-converter.html">
+    <div class="tool-left">
+      <div class="tool-icon">&#128197;</div>
+      <div class="tool-info">
+        <div class="tool-name">Meeting Room CSV Converter (UK)</div>
+        <div class="tool-desc">Paste pricing or upload a photo — outputs a ready-to-upload meeting room CSV</div>
+      </div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-badge">.csv</div>
+      <div class="tool-arrow">&#8594;</div>
+    </div>
+  </a>
+
+  <a class="tool" href="meeting-room-converter-preferred.html">
+    <div class="tool-left">
+      <div class="tool-icon">&#11088;</div>
+      <div class="tool-info">
+        <div class="tool-name">Meeting Room Converter for Preferred Partners</div>
+        <div class="tool-desc">Same as UK converter — 15% commission rate applied</div>
+      </div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-badge">.csv</div>
+      <div class="tool-arrow">&#8594;</div>
+    </div>
+  </a>
+
+  <a class="tool" href="meeting-room-converter-international.html">
+    <div class="tool-left">
+      <div class="tool-icon">&#127759;</div>
+      <div class="tool-info">
+        <div class="tool-name">Meeting Room CSV Converter (International)</div>
+        <div class="tool-desc">Paste pricing in any currency — live exchange rate conversion · outputs a ready-to-upload CSV</div>
+      </div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-badge">.csv</div>
+      <div class="tool-arrow">&#8594;</div>
+    </div>
+  </a>
+
+  <div class="group-label">Utilities</div>
+
+  <a class="tool" href="Dedupe%20Converter.html">
+    <div class="tool-left">
+      <div class="tool-icon">&#129529;</div>
+      <div class="tool-info">
+        <div class="tool-name">Dedupe Converter</div>
+        <div class="tool-desc">Any host format — removes duplicate units, outputs upload-ready CSV</div>
+      </div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-badge">.csv / .xlsx</div>
+      <div class="tool-arrow">&#8594;</div>
+    </div>
+  </a>
+
+</div>
+
+<footer>
+  <span>Hubble HQ &#183; Internal use only</span>
+  <span id="yr"></span>
+</footer>
+
+<script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+</body>
+</html>

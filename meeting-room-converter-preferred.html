@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meeting Room Converter for Preferred Partners</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    background: #f9f9f9;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: flex-start; padding: 48px 16px 64px;
+  }
+
+  /* ── Nav ── */
+  .top-nav {
+    width: 100%; max-width: 560px;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 40px;
+  }
+  .wordmark {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 15px; font-weight: 600; color: #1a1a1a;
+    letter-spacing: -0.02em; text-decoration: none;
+  }
+  .wordmark-dot { width: 7px; height: 7px; border-radius: 50%; background: #e70f67; flex-shrink: 0; }
+  .back-link { font-size: 12px; color: #bbb; text-decoration: none; transition: color 0.15s; }
+  .back-link:hover { color: #e70f67; }
+
+  /* ── Header ── */
+  .header { text-align: center; margin-bottom: 32px; }
+  .badge {
+    display: inline-block; background: #fde8f1; color: #e70f67;
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 4px 12px; border-radius: 999px; margin-bottom: 14px;
+  }
+  h1 { font-size: 1.75rem; font-weight: 600; color: #1a1a1a; letter-spacing: -0.03em; margin-bottom: 8px; }
+  h1 span { color: #e70f67; }
+  p.sub { color: #999; font-size: 0.9rem; font-weight: 400; }
+
+  /* ── Card ── */
+  .card {
+    background: #fff; border: 1px solid #eee; border-radius: 16px;
+    padding: 28px; width: 100%; max-width: 560px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex; gap: 0;
+    border: 1px solid #eee; border-radius: 10px;
+    padding: 4px; margin-bottom: 20px; background: #fafafa;
+  }
+  .tab {
+    flex: 1; padding: 8px 12px; border: none; background: none;
+    font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 500;
+    color: #aaa; cursor: pointer; border-radius: 7px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .tab:hover { color: #555; }
+  .tab.active { background: #fff; color: #1a1a1a; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Upload area ── */
+  .upload-area {
+    border: 1.5px dashed #eee; border-radius: 12px;
+    padding: 36px 20px; text-align: center; cursor: pointer;
+    transition: all 0.2s; margin-bottom: 20px; background: #fafafa;
+  }
+  .upload-area:hover, .upload-area.drag { border-color: #e70f67; background: #fdf5f9; }
+  .upload-icon {
+    width: 48px; height: 48px; background: #fde8f1; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; margin: 0 auto 12px;
+  }
+  .upload-area p { font-size: 0.875rem; color: #999; margin-top: 4px; }
+  .upload-area strong { color: #1a1a1a; font-weight: 500; }
+  .file-name { margin-top: 8px; font-size: 0.8rem; color: #e70f67; font-weight: 500; }
+
+  /* Image preview inside upload area */
+  .img-preview-wrap { position: relative; display: inline-block; }
+  .img-preview-wrap img { max-width: 100%; max-height: 180px; border-radius: 8px; display: block; }
+  .remove-img-btn {
+    position: absolute; top: 6px; right: 6px;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: rgba(0,0,0,0.5); border: none; color: #fff;
+    font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ── Textarea ── */
+  textarea {
+    width: 100%; min-height: 130px; padding: 12px 14px;
+    border: 1.5px solid #eee; border-radius: 10px;
+    font-family: 'Inter', monospace; font-size: 0.82rem;
+    color: #1a1a1a; background: #fafafa;
+    resize: vertical; outline: none; transition: border-color 0.15s;
+    line-height: 1.6; margin-bottom: 20px;
+  }
+  textarea::placeholder { color: #ccc; }
+  textarea:focus { border-color: #e70f67; background: #fff; }
+
+  /* ── Status hint ── */
+  .input-hint {
+    font-size: 0.75rem; color: #bbb; margin-top: -14px; margin-bottom: 16px;
+    min-height: 16px; transition: color 0.15s;
+  }
+  .input-hint.ready { color: #059669; }
+  .input-hint.ai { color: #e70f67; }
+
+  /* ── Button ── */
+  button.run {
+    width: 100%; padding: 13px; background: #e70f67;
+    color: #fff; border: none; border-radius: 10px;
+    font-size: 0.95rem; font-weight: 500; cursor: pointer;
+    transition: background 0.15s, transform 0.1s; font-family: 'Inter', sans-serif;
+  }
+  button.run:hover { background: #c8005a; }
+  button.run:active { transform: scale(0.99); }
+  button.run:disabled { background: #f4a0c3; cursor: not-allowed; transform: none; }
+
+  /* ── Status ── */
+  .status { margin-top: 12px; font-size: 0.85rem; color: #bbb; min-height: 20px; text-align: center; }
+  .status.error { color: #dc2626; font-weight: 500; }
+  .status.success { color: #059669; font-weight: 500; }
+
+  /* ── Divider ── */
+  .divider { height: 1px; background: #f0f0f0; margin: 20px 0; }
+
+  /* ── Results table ── */
+  .results-wrap { overflow-x: auto; margin-bottom: 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.78rem; min-width: 480px; }
+  thead tr { background: #fafafa; border-bottom: 1.5px solid #eee; }
+  th {
+    padding: 8px 10px; text-align: left; font-size: 0.68rem; font-weight: 600;
+    color: #bbb; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+  }
+  td { padding: 8px 10px; border-bottom: 1px solid #f4f4f4; color: #555; }
+  td.name-cell { font-weight: 500; color: #1a1a1a; }
+  td.fac-cell { color: #999; font-size: 0.74rem; white-space: normal; max-width: 180px; line-height: 1.4; }
+  tr:last-child td { border-bottom: none; }
+
+  .badge-active {
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    font-size: 0.68rem; font-weight: 600;
+    background: #d1fae5; color: #065f46;
+  }
+
+  /* ── CSV preview ── */
+  .csv-label {
+    font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #ccc; margin-bottom: 8px;
+  }
+  pre.csv-out {
+    background: #fafafa; border: 1px solid #eee; border-radius: 10px;
+    padding: 12px 14px; font-size: 0.72rem; font-family: monospace;
+    color: #aaa; overflow-x: auto; white-space: pre;
+    line-height: 1.7; max-height: 180px; overflow-y: auto;
+    margin-bottom: 16px;
+  }
+
+  /* ── Download row ── */
+  .dl-row { display: flex; gap: 8px; }
+  button.dl {
+    flex: 1; padding: 10px; background: #fff;
+    border: 1.5px solid #eee; border-radius: 10px;
+    font-size: 0.82rem; font-weight: 500; color: #555;
+    cursor: pointer; transition: border-color 0.15s, color 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+  button.dl:hover { border-color: #e70f67; color: #e70f67; }
+
+  /* ── Rules ── */
+  details { cursor: pointer; }
+  summary {
+    font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #e70f67; list-style: none;
+    display: flex; align-items: center; gap: 8px; user-select: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '▸'; font-size: 0.75rem; transition: transform 0.2s; }
+  details[open] summary::after { transform: rotate(90deg); }
+  .rules-grid { display: flex; flex-direction: column; gap: 7px; margin-top: 12px; }
+  .rule { display: flex; align-items: flex-start; gap: 10px; font-size: 0.8rem; color: #666; line-height: 1.4; }
+  .rule-dot {
+    width: 16px; height: 16px; border-radius: 50%; background: #e70f67;
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 0.55rem; font-weight: 700; color: #fff; margin-top: 1px;
+  }
+
+  #file-input { display: none; }
+</style>
+</head>
+<body>
+
+<div class="top-nav">
+  <a class="wordmark" href="https://sarahahmedh.github.io/hubble-availability-converters/">
+    <div class="wordmark-dot"></div>Hubble Tools
+  </a>
+  <a class="back-link" href="https://sarahahmedh.github.io/hubble-availability-converters/">← Back to all tools</a>
+</div>
+
+<div class="header">
+  <div class="badge">Preferred Partners</div>
+  <h1>Meeting Room <span>Converter for Preferred Partners</span></h1>
+  <p class="sub">Paste pricing text or upload a photo · 15% commission · outputs a ready-to-upload CSV</p>
+</div>
+
+<div class="card">
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('text')" id="tab-text">📋 Paste Text</button>
+    <button class="tab" onclick="switchTab('image')" id="tab-image">📂 Upload Image</button>
+  </div>
+
+  <!-- Text panel -->
+  <div class="tab-panel active" id="panel-text">
+    <textarea id="text-input" placeholder="Paste pricing text or type room info here&#10;&#10;e.g. Room 1A · £40/hr · £240/day · Tea/Coffee, Natural Light, Air Conditioner&#10;&#10;Spreadsheet pastes (with tab-separated columns) are detected automatically.&#10;Row numbers and building names are ignored."></textarea>
+    <div class="input-hint" id="text-hint">Waiting for input</div>
+  </div>
+
+  <!-- Image panel -->
+  <div class="tab-panel" id="panel-image">
+    <div class="upload-area" id="drop-zone">
+      <div id="drop-placeholder">
+        <div class="upload-icon">📂</div>
+        <p><strong>Click to upload</strong> or drag &amp; drop</p>
+        <p>Photo or screenshot of meeting room pricing</p>
+      </div>
+      <div id="img-preview" style="display:none;"></div>
+      <div class="file-name" id="img-name"></div>
+    </div>
+  </div>
+
+  <button class="run" id="run-btn" onclick="handleExtract()" disabled>Convert &amp; Download</button>
+  <div class="status" id="status"></div>
+
+  <!-- Results (hidden until parsed) -->
+  <div id="results-section" style="display:none;">
+    <div class="divider"></div>
+    <div class="results-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th><th>Cap.</th><th>£/hr</th>
+            <th>£/half day</th><th>£/day</th><th>Facilities</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="results-tbody"></tbody>
+      </table>
+    </div>
+    <div class="csv-label">CSV Output</div>
+    <pre class="csv-out" id="csv-out"></pre>
+    <div class="dl-row">
+      <button class="dl" onclick="copyCSV()">📋 Copy CSV</button>
+      <button class="dl" onclick="downloadCSV()">⬇ Download .csv</button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <details open>
+    <summary>Applied rules</summary>
+    <div class="rules-grid">
+      <div class="rule"><div class="rule-dot">✓</div>Spreadsheet pastes detected automatically — row numbers, building names, URLs, image links and access hours ignored</div>
+      <div class="rule"><div class="rule-dot">✓</div>Free text and images use AI extraction — URL, image, and access hours columns excluded from output</div>
+      <div class="rule"><div class="rule-dot">✓</div>Prices mapped from List Price Per Hour / Half Day / Day (excluding local taxes)</div>
+      <div class="rule"><div class="rule-dot">✓</div>Host payment auto-calculated at 85% of list price (15% commission)</div>
+      <div class="rule"><div class="rule-dot">✓</div>Credits calculated at 1 credit per £5 of list price</div>
+      <div class="rule"><div class="rule-dot">✓</div>Facilities listed in fixed order: Tea/Coffee · Screen · Whiteboard · Flipchart · Projector · Natural Light · Conference Phone · Video Conferencing · Air Conditioner · Catering</div>
+      <div class="rule"><div class="rule-dot">✓</div>Only facilities explicitly marked as "Included" are written</div>
+      <div class="rule"><div class="rule-dot">✓</div>Output matches Advisor upload template column structure</div>
+    </div>
+  </details>
+
+</div>
+
+<input type="file" id="file-input" accept="image/*">
+
+<script>
+const FACILITIES_ORDER = [
+  "Tea/Coffee","Screen","Whiteboard","Flipchart","Projector",
+  "Natural Light","Conference Phone","Video Conferencing",
+  "Air Conditioner","Catering available upon request"
+];
+const CSV_HEADERS = [
+  "Building ID","Name","Capacity",
+  "Price Per Hour (credits)","List Price Per Hour (Host Currency)","Host Payment Per Hour (Host Currency)",
+  "Price Per Half Day (credits)","List Price Per Half Day (Host Currency)","Host Payment Per Half Day (Host Currency)",
+  "Price Per Day (credits)","List Price Per Day (Host Currency)","Host Payment Per Day (Host Currency)",
+  "Facilities","Status"
+];
+
+const COL_ALIASES = {
+  name:           ["room name"],
+  capacity:       ["size","capacity","people","size (number of people)","number of people"],
+  pricePerHour:   ["price per hour","£/hr","hourly","price per hour (excluding local taxes)"],
+  pricePerHalfDay:["price per half day","half day","£/half day","price per half day (excluding local taxes)"],
+  pricePerDay:    ["price per day","full day","daily","£/day","price per day (excluding local taxes)"],
+};
+const FACILITY_COLS = {
+  "Tea/Coffee":         ["tea","coffee"],
+  "Screen":             ["screen"],
+  "Whiteboard":         ["whiteboard"],
+  "Flipchart":          ["flipchart","flip chart"],
+  "Projector":          ["projector"],
+  "Natural Light":      ["natural light"],
+  "Conference Phone":   ["conference phone"],
+  "Video Conferencing": ["video conf"],
+  "Air Conditioner":    ["air cond"],
+  "Catering available upon request":           ["catering"],
+};
+
+let rooms = [], imageBase64 = null, imageMediaType = "image/png";
+let activeTab = "text";
+
+// ── Tab switching ──
+function switchTab(tab) {
+  activeTab = tab;
+  ["text","image"].forEach(t => {
+    document.getElementById("tab-"+t).classList.toggle("active", t===tab);
+    document.getElementById("panel-"+t).classList.toggle("active", t===tab);
+  });
+  updateRunBtn();
+}
+
+function updateRunBtn() {
+  const hasText = document.getElementById("text-input").value.trim().length > 0;
+  const hasImg  = !!imageBase64;
+  document.getElementById("run-btn").disabled = activeTab === "text" ? !hasText : !hasImg;
+}
+
+// ── TSV detection & parsing ──
+function looksLikeTSV(text) {
+  const lines = text.trim().split("\n").filter(l => l.trim());
+  if (lines.length < 2) return false;
+  const tabs = lines.slice(0, 5).map(l => (l.match(/\t/g)||[]).length);
+  return tabs[0] >= 3 && tabs.every(c => c >= 3);
+}
+
+function parseTSV(text) {
+  const lines = text.trim().split("\n").filter(l => l.trim());
+  if (lines.length < 2) return null;
+
+  // Find the header row — the one that contains "Room Name"
+  let headerIdx = lines.findIndex(l => l.toLowerCase().includes("room name"));
+  if (headerIdx === -1) headerIdx = 0;
+
+  const headerCols = lines[headerIdx].split("\t").map(h => h.trim());
+  const dataLines  = lines.slice(headerIdx + 1);
+
+  // Detect column offset: data rows may have extra leading columns
+  // (row number, building name) that the header row doesn't have.
+  // Find where "Room Name" sits in the header, then find the matching
+  // data cell in the first data row by looking for the first cell that
+  // is NOT a number and NOT a known building name prefix.
+  const headerNameIdx = headerCols.findIndex(h => h.toLowerCase().includes("room name"));
+
+  // Work out the offset by comparing header column count vs first data row
+  const firstDataCols = dataLines[0] ? dataLines[0].split("\t") : [];
+  const colDiff = firstDataCols.length - headerCols.length;
+  // colDiff is how many extra leading columns data rows have vs the header
+  const offset = colDiff > 0 ? colDiff : 0;
+
+  // Build a normalised headers array at offset 0 using the header row
+  // but applied at `offset` position into each data row
+  const headers = headerCols.map(h => h.trim().toLowerCase());
+
+  // Columns to always ignore regardless of content
+  const SKIP_FRAGMENTS = [
+    "url", "link", "brochure", "http", "gdrive", "drive.google", "building",
+    "access hour", "opening hour", "hours (e.g", "8am", "9am",
+    "image", "photo", "extra cost", "extra pricing"
+  ];
+  const ignoredCols = new Set(
+    headers.reduce((acc, h, i) => {
+      if (SKIP_FRAGMENTS.some(f => h.includes(f))) acc.push(i);
+      return acc;
+    }, [])
+  );
+
+  // findCol returns the index within the header array (0-based from header start)
+  // Callers must add `offset` to get the real column index in data rows
+  function findCol(aliases) {
+    const idx = headers.findIndex(h => aliases.some(a => h.includes(a)));
+    return ignoredCols.has(idx) ? -1 : idx;
+  }
+  const colName        = findCol(COL_ALIASES.name);
+  const colCap         = findCol(COL_ALIASES.capacity);
+  const colHour        = findCol(COL_ALIASES.pricePerHour);
+  const colHalfDay     = findCol(COL_ALIASES.pricePerHalfDay);
+  const colDay         = findCol(COL_ALIASES.pricePerDay);
+  const facilityColMap = {};
+  FACILITIES_ORDER.forEach(fac => {
+    const idx = headers.findIndex(h => FACILITY_COLS[fac].some(a => h.includes(a)));
+    if (idx !== -1 && !ignoredCols.has(idx)) facilityColMap[fac] = idx;
+  });
+  if (colName === -1) return null;
+
+  const parsed = [];
+  for (const line of dataLines) {
+    const raw = line.split("\t");
+    // Apply offset so header index 0 maps to the correct data column
+    const col = i => raw[i + offset] ?? "";
+    const name = col(colName).trim();
+    if (!name || /^\d+$/.test(name)) continue; // skip blank or pure-number rows
+    const facs = FACILITIES_ORDER.filter(fac => {
+      const idx = facilityColMap[fac];
+      if (idx === undefined) return false;
+      const val = col(idx).trim().toLowerCase();
+      return val === "included" || val === "yes" || val === "✓" || val === "x" || val === "true";
+    });
+    parsed.push({
+      name,
+      capacity:        colCap     >= 0 ? parseInt(col(colCap))     || "" : "",
+      pricePerHour:    colHour    >= 0 ? parseFloat(col(colHour))  || "" : "",
+      pricePerHalfDay: colHalfDay >= 0 ? parseFloat(col(colHalfDay)) || "" : "",
+      pricePerDay:     colDay     >= 0 ? parseFloat(col(colDay))   || "" : "",
+      facilities:      facs.join(", "),
+      status:          "active"
+    });
+  }
+  return parsed.length > 0 ? parsed : null;
+}
+
+// ── CSV helpers ──
+function escapeCSV(val) {
+  if (val === null || val === undefined) return "";
+  const s = String(val);
+  return (s.includes(",") || s.includes('"') || s.includes("\n")) ? `"${s.replace(/"/g,'""')}"` : s;
+}
+function buildCSV(rooms) {
+  const rows = [CSV_HEADERS.join(",")];
+  rooms.forEach((r, i) => {
+    const hr = parseFloat(r.pricePerHour) || 0;
+    const hd = parseFloat(r.pricePerHalfDay) || 0;
+    const d  = parseFloat(r.pricePerDay) || 0;
+    rows.push([
+      i === 0 ? "xxx" : "", r.name, r.capacity || "",
+      hr ? Math.round(hr/5) : "", hr||"", hr ? (hr*0.85).toFixed(2) : "",
+      hd ? Math.round(hd/5) : "", hd||"", hd ? (hd*0.85).toFixed(2) : "",
+      d  ? Math.round(d/5)  : "", d ||"", d  ? (d*0.85).toFixed(2)  : "",
+      r.facilities || "", r.status || "active"
+    ].map(escapeCSV).join(","));
+  });
+  return rows.join("\n");
+}
+
+// ── Image upload ──
+const dropZone = document.getElementById("drop-zone");
+dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("drag"); });
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag"));
+dropZone.addEventListener("drop", e => { e.preventDefault(); dropZone.classList.remove("drag"); loadImage(e.dataTransfer.files[0]); });
+dropZone.addEventListener("click", () => { if (!imageBase64) document.getElementById("file-input").click(); });
+document.getElementById("file-input").addEventListener("change", e => { if (e.target.files[0]) loadImage(e.target.files[0]); });
+
+function loadImage(file) {
+  if (!file || !file.type.startsWith("image/")) return;
+  imageMediaType = file.type;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    imageBase64 = ev.target.result.split(",")[1];
+    const preview = document.getElementById("img-preview");
+    preview.innerHTML = `<div class="img-preview-wrap">
+      <img src="${ev.target.result}" alt="Pricing sheet">
+      <button class="remove-img-btn" onclick="clearImage(event)">✕</button></div>`;
+    document.getElementById("drop-placeholder").style.display = "none";
+    preview.style.display = "block";
+    document.getElementById("img-name").textContent = file.name;
+    updateRunBtn();
+  };
+  reader.readAsDataURL(file);
+}
+function clearImage(e) {
+  if (e) e.stopPropagation();
+  imageBase64 = null;
+  document.getElementById("img-preview").style.display = "none";
+  document.getElementById("img-preview").innerHTML = "";
+  document.getElementById("drop-placeholder").style.display = "block";
+  document.getElementById("img-name").textContent = "";
+  document.getElementById("file-input").value = "";
+  updateRunBtn();
+}
+
+// ── Text input hint ──
+document.getElementById("text-input").addEventListener("input", function() {
+  updateRunBtn();
+  const val = this.value.trim();
+  const hint = document.getElementById("text-hint");
+  if (!val) { hint.textContent = "Waiting for input"; hint.className = "input-hint"; return; }
+  if (looksLikeTSV(val)) {
+    hint.textContent = "Spreadsheet detected — will parse directly, no AI needed";
+    hint.className = "input-hint ready";
+  } else {
+    hint.textContent = "Free text detected — will use AI to extract rooms";
+    hint.className = "input-hint ai";
+  }
+});
+
+// ── Status helper ──
+function setStatus(msg, cls) {
+  const el = document.getElementById("status");
+  el.textContent = msg;
+  el.className = "status" + (cls ? " "+cls : "");
+}
+
+// ── Main extract ──
+async function handleExtract() {
+  const btn = document.getElementById("run-btn");
+  document.getElementById("results-section").style.display = "none";
+  const origText = btn.textContent;
+  btn.textContent = "Processing…";
+  btn.disabled = true;
+  setStatus("", "");
+
+  try {
+    if (activeTab === "text") {
+      const text = document.getElementById("text-input").value.trim();
+      if (looksLikeTSV(text)) {
+        const parsed = parseTSV(text);
+        if (parsed && parsed.length > 0) {
+          rooms = parsed;
+          renderResults();
+          setStatus("✓ " + rooms.length + " rooms parsed from spreadsheet.", "success");
+          btn.textContent = origText; btn.disabled = false; updateRunBtn(); return;
+        }
+      }
+      // AI fallback for free text
+      setStatus("Asking AI to extract rooms…", "");
+      rooms = await callAI(null, text);
+    } else {
+      setStatus("Reading image…", "");
+      rooms = await callAI(imageBase64, null);
+    }
+    renderResults();
+    setStatus("✓ " + rooms.length + " rooms extracted — ready to download.", "success");
+  } catch(err) {
+    setStatus("Error: " + (err.message || "Could not parse room data."), "error");
+  }
+  btn.textContent = origText; btn.disabled = false; updateRunBtn();
+}
+
+async function callAI(imgBase64, text) {
+  const facilitiesNote = `Facilities must be in this exact order if present, comma-separated: ${FACILITIES_ORDER.join(", ")}. Only include facilities explicitly marked as included.`;
+  const prompt = `Extract only the meeting room records. Return ONLY a raw JSON array — no markdown, no backticks, no explanation.
+Each object must have ONLY these fields: name (string), capacity (integer or ""), pricePerHour (number or ""), pricePerHalfDay (number or ""), pricePerDay (number or ""), facilities (string), status ("active").
+IGNORE entirely — do not extract or output: row/index numbers, building names, URLs of any kind, website links, Google Drive links, image links, access hours or opening hours (e.g. "8am-6pm"), brochure links, extra cost pricing columns, any column that is a URL or time range.
+${facilitiesNote}`;
+
+  let content;
+  if (imgBase64) {
+    content = [
+      { type:"image", source:{ type:"base64", media_type:imageMediaType, data:imgBase64 } },
+      { type:"text", text: prompt + "\nExtract from the image." }
+    ];
+  } else {
+    content = prompt + `\n\nText:\n${text}`;
+  }
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ model:"claude-sonnet-4-6", max_tokens:2000,
+      messages:[{ role:"user", content }] })
+  });
+  const data = await res.json();
+  const raw = (data.content||[]).map(b=>b.text||"").join("");
+  const parsed = JSON.parse(raw.replace(/```json|```/g,"").trim());
+  if (!Array.isArray(parsed)) throw new Error("Unexpected response format.");
+  return parsed;
+}
+
+function renderResults() {
+  document.getElementById("results-tbody").innerHTML = rooms.map(r => `
+    <tr>
+      <td class="name-cell">${h(r.name)}</td>
+      <td>${r.capacity||"—"}</td>
+      <td>${r.pricePerHour?"£"+r.pricePerHour:"—"}</td>
+      <td>${r.pricePerHalfDay?"£"+r.pricePerHalfDay:"—"}</td>
+      <td>${r.pricePerDay?"£"+r.pricePerDay:"—"}</td>
+      <td class="fac-cell">${h(r.facilities||"—")}</td>
+      <td><span class="badge-active">${h(r.status||"active")}</span></td>
+    </tr>`).join("");
+  document.getElementById("csv-out").textContent = buildCSV(rooms);
+  document.getElementById("results-section").style.display = "block";
+}
+
+function h(s) {
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+function copyCSV() {
+  navigator.clipboard.writeText(buildCSV(rooms)).then(() => setStatus("✓ Copied to clipboard.", "success"));
+}
+function downloadCSV() {
+  const blob = new Blob([buildCSV(rooms)], {type:"text/csv"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href=url; a.download="meeting_rooms_preferred.csv"; a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
