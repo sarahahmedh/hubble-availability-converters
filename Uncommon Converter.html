@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uncommon Converter</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --brand: #e70f67;
+    --brand-dark: #b50a50;
+    --brand-light: rgba(231,15,103,0.08);
+    --brand-faint: rgba(231,15,103,0.04);
+    --brand-border: rgba(231,15,103,0.22);
+    --brand-glow: rgba(231,15,103,0.3);
+    --bg-a: #fff0f6;
+    --bg-b: #fdf0f8;
+    --text-dark: #1a0010;
+    --text-muted: rgba(90,0,48,0.52);
+    --green: #00a86b;
+    --green-bg: #f0fdf7;
+    --card-bg: rgba(255,255,255,0.82);
+    --panel-bg: rgba(231,15,103,0.025);
+    --panel-border: rgba(231,15,103,0.11);
+    --shadow: 0 8px 40px rgba(231,15,103,0.09), 0 2px 12px rgba(90,0,48,0.05);
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--bg-a) 0%, var(--bg-b) 100%);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 48px 16px 80px;
+  }
+
+  .header { text-align: center; margin-bottom: 36px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--brand); color: #fff;
+    font-size: 0.67rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 5px 14px; border-radius: 999px;
+    margin-bottom: 16px;
+  }
+  .badge-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.65); }
+  h1 { font-size: 2rem; font-weight: 800; color: var(--text-dark); letter-spacing: -0.04em; margin-bottom: 8px; }
+  h1 em { font-style: normal; color: var(--brand); }
+  p.sub { color: var(--text-muted); font-size: 0.875rem; }
+
+  .card {
+    background: var(--card-bg); backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.95); border-radius: 22px;
+    padding: 32px; width: 100%; max-width: 650px;
+    box-shadow: var(--shadow);
+  }
+
+  .instructions {
+    background: var(--panel-bg); border: 1px solid var(--panel-border);
+    border-radius: 14px; padding: 16px 18px; margin-bottom: 22px;
+  }
+  .instructions-title {
+    font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--brand); margin-bottom: 10px;
+  }
+  .step {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 0.8rem; color: var(--text-dark); margin-bottom: 7px; line-height: 1.45;
+  }
+  .step:last-child { margin-bottom: 0; }
+  .step-num {
+    width: 20px; height: 20px; border-radius: 50%; background: var(--brand);
+    color: #fff; font-size: 0.62rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+  }
+  .step kbd {
+    display: inline-block; background: #fff; border: 1px solid var(--brand-border);
+    border-radius: 4px; padding: 1px 5px; font-family: monospace;
+    font-size: 0.75rem; color: var(--text-dark);
+  }
+
+  .paste-label {
+    font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--text-muted); display: block; margin-bottom: 8px;
+  }
+  .paste-box {
+    width: 100%; min-height: 160px; padding: 14px;
+    border: 1.5px solid var(--brand-border); border-radius: 12px;
+    font-family: 'Inter', monospace; font-size: 0.78rem; line-height: 1.65;
+    color: var(--text-dark); background: #fff; resize: vertical;
+    transition: border-color 0.15s; margin-bottom: 12px;
+  }
+  .paste-box:focus { outline: none; border-color: var(--brand); }
+  .paste-box::placeholder { color: var(--text-muted); opacity: 0.7; }
+
+  .parse-btn {
+    width: 100%; padding: 10px 12px; border-radius: 10px;
+    border: 1.5px solid var(--brand-border);
+    background: var(--brand-faint); color: var(--brand);
+    font-family: inherit; font-size: 0.84rem; font-weight: 700;
+    cursor: pointer; transition: all 0.15s; margin-bottom: 0;
+    letter-spacing: -0.01em;
+  }
+  .parse-btn:hover { background: var(--brand-light); border-color: var(--brand); }
+
+  .results-panel {
+    display: none; background: var(--panel-bg);
+    border: 1px solid var(--panel-border); border-radius: 16px;
+    padding: 18px; margin-top: 18px;
+  }
+  .results-title {
+    font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--brand); margin-bottom: 14px;
+  }
+
+  .building-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .building-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #fff; border: 1px solid var(--panel-border); border-radius: 10px;
+    padding: 10px 14px;
+  }
+  .building-name { font-size: 0.84rem; font-weight: 600; color: var(--text-dark); }
+  .building-count {
+    font-size: 0.72rem; color: var(--text-muted);
+    background: var(--brand-faint); border: 1px solid var(--brand-border);
+    border-radius: 999px; padding: 2px 10px;
+  }
+
+  .preview-scroll { overflow-x: auto; margin-bottom: 4px; }
+  .preview-table { min-width: 560px; width: 100%; border-collapse: collapse; }
+  .preview-table th {
+    font-size: 0.62rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--text-muted); white-space: nowrap;
+    padding: 4px 8px; text-align: left; border-bottom: 1px solid var(--panel-border);
+  }
+  .preview-table td {
+    font-size: 0.74rem; color: var(--text-dark); padding: 5px 8px;
+    border-bottom: 1px solid rgba(231,15,103,0.05); white-space: nowrap;
+    max-width: 160px; overflow: hidden; text-overflow: ellipsis;
+  }
+  .preview-table tr:last-child td { border-bottom: none; }
+  .tag { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 0.65rem; font-weight: 600; }
+  .tag-ok   { background: var(--green-bg); color: var(--green); }
+  .tag-miss { background: #fff0f6; color: var(--brand); }
+
+  .more-rows { font-size: 0.72rem; color: var(--text-muted); padding: 6px 8px; }
+
+  button.run {
+    width: 100%; padding: 15px; background: var(--brand);
+    color: #fff; border: none; border-radius: 13px;
+    font-size: 1rem; font-weight: 700; cursor: pointer;
+    transition: all 0.18s; letter-spacing: -0.01em;
+    box-shadow: 0 4px 20px var(--brand-glow); margin-top: 18px;
+  }
+  button.run:hover { background: var(--brand-dark); transform: translateY(-1px); box-shadow: 0 6px 28px var(--brand-glow); }
+  button.run:disabled { background: rgba(231,15,103,0.38); box-shadow: none; cursor: not-allowed; transform: none; }
+
+  .status { margin-top: 14px; font-size: 0.83rem; color: var(--text-muted); min-height: 20px; text-align: center; }
+  .status.error   { color: #dc2626; font-weight: 500; }
+  .status.success { color: var(--green); font-weight: 600; }
+
+  .divider { height: 1px; background: linear-gradient(90deg, transparent, var(--brand-border), transparent); margin: 24px 0; }
+
+  details summary {
+    font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--brand); list-style: none;
+    display: flex; align-items: center; cursor: pointer; user-select: none;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::after { content: '▸'; margin-left: 6px; font-size: 0.75rem; transition: transform 0.2s; }
+  details[open] summary::after { transform: rotate(90deg); }
+  .rules-grid { display: flex; flex-direction: column; gap: 7px; margin-top: 12px; }
+  .rule { display: flex; align-items: flex-start; gap: 9px; font-size: 0.77rem; color: var(--text-dark); opacity: 0.75; line-height: 1.45; }
+  .rule-dot {
+    width: 17px; height: 17px; border-radius: 50%; background: var(--brand);
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 0.55rem; font-weight: 800; color: #fff; margin-top: 1px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="badge"><span class="badge-dot"></span> Hubble Host Tools <span class="badge-dot"></span></div>
+  <h1>Uncommon <em>Converter</em></h1>
+  <p class="sub">Paste the availability page source · get one CSV per building</p>
+</div>
+
+<div class="card">
+
+  <div class="instructions">
+    <div class="instructions-title">How to get the page source</div>
+    <div class="step"><div class="step-num">1</div><span>Log in at <strong>uncommon.co.uk/availability</strong></span></div>
+    <div class="step"><div class="step-num">2</div><span>Press <kbd>Ctrl+U</kbd> (or <kbd>⌘+U</kbd> on Mac) to open the page source</span></div>
+    <div class="step"><div class="step-num">3</div><span>Press <kbd>Ctrl+A</kbd> then <kbd>Ctrl+C</kbd> to copy everything</span></div>
+    <div class="step"><div class="step-num">4</div><span>Paste it below and click <strong>Parse &amp; Preview</strong></span></div>
+  </div>
+
+  <label class="paste-label">Paste full page HTML source</label>
+  <textarea class="paste-box" id="htmlInput" placeholder="Paste the full HTML source here (Ctrl+U → Ctrl+A → Ctrl+C)…"></textarea>
+  <button class="parse-btn" onclick="parseHTML()">Parse &amp; Preview →</button>
+
+  <div class="results-panel" id="resultsPanel">
+    <div class="results-title">Detected — <span id="totalCount">0</span> units across <span id="buildingCount">0</span> buildings</div>
+    <div class="building-list" id="buildingList"></div>
+    <div class="preview-scroll">
+      <table class="preview-table">
+        <thead><tr>
+          <th>Building</th><th>Unit No.</th><th>Floor</th><th>Sq Ft</th><th>Desks</th><th>Price/mo</th><th>Available</th><th>+Rooms</th>
+        </tr></thead>
+        <tbody id="previewBody"></tbody>
+      </table>
+    </div>
+    <div class="more-rows" id="moreRows"></div>
+  </div>
+
+  <button class="run" id="runBtn" onclick="convert()" disabled>Convert &amp; Download CSVs</button>
+  <div class="status" id="status"></div>
+
+  <div class="divider"></div>
+
+  <details>
+    <summary>Output format &amp; rules</summary>
+    <div class="rules-grid">
+      <div class="rule"><div class="rule-dot">✓</div>One CSV per Uncommon building (Liverpool Street, Fulham, Borough, Highbury &amp; Islington, Holborn). Multiple buildings → downloaded as a .zip.</div>
+      <div class="rule"><div class="rule-dot">✓</div>Output columns: Floor · Office/Unit Number · Square footage · Desk capacity · Price per month · Floor · Min term · Max term · Available from · What's included · What's not included · Office position · Number of additional rooms</div>
+      <div class="rule"><div class="rule-dot">✓</div>Unit number taken directly from the office ref after the | pipe (e.g. "42 Desks + 2 Meeting Rooms | 1.04-6" → "Office 1.04-6"). "Available Now" listings → blank available date. Future months → formatted date.</div>
+      <div class="rule"><div class="rule-dot">✓</div>Prices rounded up to nearest whole pound. VAT suffix stripped.</div>
+      <div class="rule"><div class="rule-dot">✓</div>Desk count taken from the desks cell (e.g. "42 Desks" → 42). Ranges like "4-5 Desks" → lower number.</div>
+      <div class="rule"><div class="rule-dot">✓</div>Meeting rooms extracted from desk label (e.g. "+ 2 Meeting Rooms" → 2 in additional rooms column).</div>
+      <div class="rule"><div class="rule-dot">✓</div>Notes from the availability row included in What's included.</div>
+    </div>
+  </details>
+</div>
+
+<script>
+const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+
+const OUTPUT_HEADERS = [
+  "Floor","Office/Unit Number","Square footage","Desk capacity","Price per month",
+  "Floor","Min term (months)","Max term (months)","Available from",
+  "What's included","What's not included","Office position","Number of additional rooms"
+];
+const OUTPUT_KEYS = [
+  "floor","unit","sqft","desks","price",
+  "floor","min_term","max_term","available",
+  "included","not_included","position","extra_rooms"
+];
+
+// Building sections — matched by their section id
+const BUILDING_MAP = {
+  'liverpool-street':   'Liverpool Street',
+  'fulham':             'Fulham',
+  'borough':            'Borough',
+  'highbury-islington': 'Highbury & Islington',
+  'holborn':            'Holborn',
+};
+
+let allRows = [];
+
+// ── Main parser ────────────────────────────────────────────────────────────────
+function parseHTML() {
+  const html = document.getElementById('htmlInput').value.trim();
+  setStatus('');
+  document.getElementById('resultsPanel').style.display = 'none';
+  document.getElementById('runBtn').disabled = true;
+
+  if (!html) { setStatus('Paste the page source first.', 'error'); return; }
+
+  const doc = (new DOMParser()).parseFromString(html, 'text/html');
+  const rows = [];
+
+  // Find each building section by its id
+  for (const [sectionId, buildingLabel] of Object.entries(BUILDING_MAP)) {
+    const section = doc.getElementById(sectionId);
+    if (!section) continue;
+
+    const availRows = section.querySelectorAll('.availability-row');
+    for (const row of availRows) {
+      const parsed = parseRow(row, buildingLabel);
+      if (parsed) rows.push(parsed);
+    }
+  }
+
+  if (!rows.length) {
+    setStatus('No availability rows found. Make sure you pasted the full page source from the logged-in availability page.', 'error');
+    return;
+  }
+
+  allRows = rows;
+  renderPreview();
+  document.getElementById('runBtn').disabled = false;
+  setStatus(`Found ${rows.length} unit${rows.length !== 1 ? 's' : ''} across ${new Set(rows.map(r => r.building)).size} buildings. Review and download.`);
+}
+
+// ── Row parser ─────────────────────────────────────────────────────────────────
+function parseRow(el, building) {
+  const getText = cls => {
+    const found = el.querySelector(cls);
+    return found ? found.textContent.trim() : '';
+  };
+
+  const rawDesks    = getText('.availability-row__desks');
+  const rawPrice    = getText('.availability-row__pcm');
+  const rawSqft     = getText('.availability-row__sqft');
+  const rawFloor    = getText('.availability-row__floor');
+  const rawButton   = getText('.availability-row__button');
+  const rawNotes    = getText('.availability-row__notes');
+
+  if (!rawDesks && !rawPrice) return null;
+
+  // Unit number: everything after the | pipe in the desks cell
+  // e.g. "42 Desks + 2 Meeting Rooms | 1.04-6"  →  "1.04-6"
+  // e.g. "20 Desks | 1.04"  →  "1.04"
+  let unitRef = '';
+  const pipeParts = rawDesks.split('|');
+  if (pipeParts.length >= 2) {
+    unitRef = 'Office ' + pipeParts[pipeParts.length - 1].trim();
+  } else {
+    // No pipe — use cleaned desks text as fallback
+    unitRef = 'Office ' + rawDesks.replace(/\d+\s*desks?.*$/i, '').trim();
+    if (unitRef === 'Office ') unitRef = rawDesks.trim();
+  }
+
+  // Desk count — first number before "Desks"
+  // Handles "42 Desks", "26 Desks + 2 Meeting Rooms", "4-5 Desks"
+  const deskMatch = rawDesks.match(/^(\d+)(?:\s*[-–]\s*\d+)?\s*desks?/i);
+  const desks = deskMatch ? parseInt(deskMatch[1], 10) : '';
+
+  // Extra rooms — "+ N Meeting Room(s)" or "+ Boardroom" from desks cell
+  let extra_rooms = '';
+  const mrMatch = rawDesks.match(/\+\s*(\d+)\s*(?:person\s+)?meeting\s+rooms?/i);
+  if (mrMatch) {
+    extra_rooms = mrMatch[1];
+  } else if (/\+\s*(?:boardroom|meeting\s*room)/i.test(rawDesks)) {
+    extra_rooms = '1';
+  }
+
+  const price    = parsePrice(rawPrice);
+  const sqft     = parseSqft(rawSqft);
+  const floor    = parseFloor(rawFloor);
+  const available = parseAvailable(rawButton);
+  const notes    = rawNotes.replace(/\s+/g, ' ').trim();
+
+  // What's included: unit ref + notes if any
+  const includedLines = [`* ${unitRef}`];
+  if (notes) includedLines.push(`* ${notes}`);
+  const included = includedLines.join('\n');
+
+  return {
+    building,
+    floor,
+    unit: unitRef,
+    sqft: sqft || '',
+    desks,
+    price,
+    min_term: '',
+    max_term: '',
+    available,
+    included,
+    not_included: '',
+    position: '',
+    extra_rooms
+  };
+}
+
+// ── Field parsers ──────────────────────────────────────────────────────────────
+function parsePrice(raw) {
+  if (!raw) return '';
+  const cleaned = String(raw)
+    .replace(/[£$€,\s]/g, '')
+    .replace(/\+?\s*vat/gi, '')
+    .replace(/pcm|p\.?m\.|per\s*month/gi, '')
+    .replace(/[^0-9.]/g, '');
+  const n = parseFloat(cleaned);
+  return isNaN(n) || n === 0 ? '' : Math.ceil(n);
+}
+
+function parseSqft(raw) {
+  if (!raw) return 0;
+  const s = String(raw);
+  const isSqm = /sq\.?\s*m\.?|sqm|\bm2\b/i.test(s);
+  const n = parseFloat(s.replace(/sq\.?\s*ft\.?|sqft|square\s*feet|sf\b|sq\.?\s*m\.?|sqm|\bm2\b/gi, '').replace(/[,\s]/g, '')) || 0;
+  if (!n) return 0;
+  return isSqm ? Math.ceil(n * 10.764) : Math.ceil(n);
+}
+
+function parseFloor(raw) {
+  if (!raw) return '';
+  const s = String(raw).trim();
+  const l = s.toLowerCase();
+  if (l === 'g' || l === 'ground' || /ground\s*floor/i.test(s)) return 'Ground';
+  if (/lg|lower\s*ground/i.test(s)) return 'Lower Ground';
+  if (l === 'b' || l === 'basement') return 'Basement';
+  if (l === 'm' || l === 'mezzanine') return 'Mezzanine';
+  const fm = s.match(/(?:floor|level)\s*(\d+)/i) || s.match(/(\d+)(?:st|nd|rd|th)\s*floor/i);
+  if (fm) return parseInt(fm[1], 10);
+  const ord = s.match(/^(\d+)(st|nd|rd|th)$/i);
+  if (ord) return parseInt(ord[1], 10);
+  const n = parseInt(s.replace(/[^0-9\-]/g, ''), 10);
+  return isNaN(n) ? s : n;
+}
+
+function parseAvailable(buttonText) {
+  if (!buttonText) return '';
+  const t = buttonText.trim();
+
+  // "Available Now" → blank
+  if (/available\s*now/i.test(t)) return '';
+
+  // "Available September", "Available October 2026", etc.
+  const monthMatch = t.match(/available\s+(january|february|march|april|may|june|july|august|september|october|november|december)(?:\s+(\d{4}))?/i);
+  if (monthMatch) {
+    const months = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+    const mi = months.findIndex(m => m === monthMatch[1].toLowerCase());
+    const yr = monthMatch[2] ? parseInt(monthMatch[2]) : TODAY.getFullYear();
+    let dt = new Date(yr, mi, 1); dt.setHours(0,0,0,0);
+    if (dt > TODAY) return fmtDate(dt);
+    // Try next year if month already passed
+    dt = new Date(yr + 1, mi, 1);
+    return dt > TODAY ? fmtDate(dt) : '';
+  }
+
+  // "Available [Month Year]" without "available" prefix handled above
+  // Catch any future date string
+  const d = new Date(t.replace(/available\s*(from)?\s*/i, ''));
+  d.setHours(0,0,0,0);
+  return (!isNaN(d.getTime()) && d > TODAY) ? fmtDate(d) : '';
+}
+
+function fmtDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// ── Preview ────────────────────────────────────────────────────────────────────
+function renderPreview() {
+  const byBuilding = {};
+  allRows.forEach(r => { if (!byBuilding[r.building]) byBuilding[r.building] = 0; byBuilding[r.building]++; });
+  const bldNames = Object.keys(byBuilding);
+
+  document.getElementById('totalCount').textContent    = allRows.length;
+  document.getElementById('buildingCount').textContent = bldNames.length;
+
+  document.getElementById('buildingList').innerHTML = bldNames.map(b =>
+    `<div class="building-row">
+      <span class="building-name">${b}</span>
+      <span class="building-count">${byBuilding[b]} unit${byBuilding[b] !== 1 ? 's' : ''}</span>
+    </div>`
+  ).join('');
+
+  const preview = allRows.slice(0, 12);
+  document.getElementById('previewBody').innerHTML = preview.map(r => `<tr>
+    <td>${tag(r.building)}</td>
+    <td>${tag(r.unit)}</td>
+    <td>${tag(r.floor)}</td>
+    <td>${tag(r.sqft)}</td>
+    <td>${tag(r.desks)}</td>
+    <td>${tag(r.price ? '£' + r.price : '')}</td>
+    <td>${tag(r.available || 'Now')}</td>
+    <td>${tag(r.extra_rooms)}</td>
+  </tr>`).join('');
+
+  const more = allRows.length - 12;
+  document.getElementById('moreRows').textContent = more > 0 ? `…and ${more} more rows` : '';
+  document.getElementById('resultsPanel').style.display = 'block';
+}
+
+function tag(v) {
+  return v ? `<span class="tag tag-ok">${String(v).substring(0, 30)}</span>` : `<span class="tag tag-miss">—</span>`;
+}
+
+// ── Convert & Download ─────────────────────────────────────────────────────────
+async function convert() {
+  if (!allRows.length) { setStatus('Parse the HTML first.', 'error'); return; }
+  document.getElementById('runBtn').disabled = true;
+  setStatus('Generating CSVs…');
+
+  try {
+    const groups = {};
+    for (const row of allRows) {
+      const b = row.building || 'Uncommon';
+      if (!groups[b]) groups[b] = [];
+      groups[b].push(row);
+    }
+
+    const d = TODAY;
+    const date = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+
+    const buildCSV = records => {
+      const csvRows = [OUTPUT_HEADERS];
+      for (const r of records) {
+        csvRows.push(OUTPUT_KEYS.map(k => r[k] ?? ''));
+      }
+      return toCSVString(csvRows);
+    };
+
+    const bldNames = Object.keys(groups);
+
+    if (bldNames.length === 1) {
+      const blob = new Blob([buildCSV(groups[bldNames[0]])], { type: 'text/csv' });
+      dl(blob, `Django Ready - Uncommon ${bldNames[0]} - ${date}.csv`);
+      setStatus(`✓ Done — ${groups[bldNames[0]].length} rows exported.`, 'success');
+    } else {
+      const zip = new JSZip();
+      for (const b of bldNames) {
+        const safe = b.replace(/[:\\\/\?\*\[\]<>|&]/g, '').trim().substring(0, 80);
+        zip.file(`Uncommon ${safe}.csv`, buildCSV(groups[b]));
+      }
+      const blob = await zip.generateAsync({ type: 'blob' });
+      dl(blob, `Django Ready - Uncommon - ${date}.zip`);
+      setStatus(`✓ Done — ${bldNames.length} building CSVs downloaded as zip.`, 'success');
+    }
+  } catch(e) {
+    setStatus('Error: ' + e.message, 'error');
+    console.error(e);
+  }
+
+  document.getElementById('runBtn').disabled = false;
+}
+
+function toCSVString(rows) {
+  return rows.map(r => r.map(cell => {
+    const s = String(cell ?? '');
+    return (s.includes(',') || s.includes('"') || s.includes('\n'))
+      ? `"${s.replace(/"/g, '""')}"` : s;
+  }).join(',')).join('\r\n');
+}
+
+function dl(blob, name) {
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: name });
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href);
+}
+
+function setStatus(msg, cls = '') {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status' + (cls ? ' ' + cls : '');
+}
+</script>
+</body>
+</html>
