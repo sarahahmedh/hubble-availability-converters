@@ -119,6 +119,7 @@
       <div class="rule"><div class="rule-dot">✓</div>Min term: 3 months | Max term: 24 months | What's not included: blank</div>
       <div class="rule"><div class="rule-dot">✓</div>Additional rooms ← numbered (e.g. "2 meeting rooms") and unnumbered (e.g. "meeting room" = 1) phrases detected</div>
       <div class="rule"><div class="rule-dot skip">✗</div>Rows where Contract = "Under offer" are skipped</div>
+      <div class="rule"><div class="rule-dot skip">✗</div>Rows missing Price per month or Desk capacity are skipped</div>
     </div>
   </details>
 </div>
@@ -223,8 +224,6 @@ function extractRooms(note) {
   let total = 0;
 
   // Pattern 1: explicit number + optional filler words + room-type keyword
-  // Handles: "2 meeting rooms", "1 x boardroom", "3x private MRs", "1 board room",
-  //          "2 x internal meeting rooms", "1 meeting suite", "1 x meeting pod"
   const numbered = /\b(\d+)\s*(?:x\s*)?(?:\w+\s+){0,4}?(?:meeting\s+rooms?|boardrooms?|board\s+rooms?|meeting\s+pods?|meeting\s+suites?|\bMRs?\b)/gi;
   const numberedPositions = [];
   let m;
@@ -233,8 +232,7 @@ function extractRooms(note) {
     numberedPositions.push({ start: m.index, end: m.index + m[0].length });
   }
 
-  // Pattern 2: unnumbered room-type keyword — count as 1 each, but skip if already
-  // captured by a numbered match (checked by proximity to avoid double-counting)
+  // Pattern 2: unnumbered room-type keyword — count as 1 each
   const unnumbered = /\b(?:meeting\s+rooms?|boardrooms?|board\s+rooms?|meeting\s+pods?|meeting\s+suites?)\b/gi;
   while ((m = unnumbered.exec(s)) !== null) {
     const alreadyCounted = numberedPositions.some(
@@ -252,6 +250,11 @@ function toCSV(rows) {
     return (s.includes(',') || s.includes('"') || s.includes('\n'))
       ? '"' + s.replace(/"/g, '""') + '"' : s;
   }).join(',')).join('\r\n');
+}
+
+// ── Missing field check ───────────────────────────────────────────────────────
+function isBlank(val) {
+  return val === null || val === undefined || String(val).trim() === '';
 }
 
 // ── Main convert ──────────────────────────────────────────────────────────────
@@ -288,12 +291,26 @@ async function convert() {
     if (!COL.building) throw new Error('No "Building Name" column found.');
     if (!COL.officeNo) throw new Error('No "Office No." column found.');
     if (!COL.price)    throw new Error('No "Monthly Price" column found.');
+
     const buildings = {};
+    let skippedUnderOffer = 0;
+    let skippedMissingFields = 0;
+
     for (const row of raw) {
+      // Skip: under offer
       const contract = COL.contract ? String(row[COL.contract] ?? '').trim().toLowerCase() : '';
-      if (contract === 'under offer') continue;
+      if (contract === 'under offer') { skippedUnderOffer++; continue; }
+
       const b = String(row[COL.building] ?? '').trim();
       if (!b) continue;
+
+      // Skip: missing price or desk capacity
+      const rawPrice = COL.price ? row[COL.price] : '';
+      const rawDesks = COL.desks ? row[COL.desks] : '';
+      const parsedPrice = parsePrice(rawPrice);
+      if (isBlank(rawPrice) || parsedPrice === '') { skippedMissingFields++; continue; }
+      if (isBlank(rawDesks)) { skippedMissingFields++; continue; }
+
       const o = COL.officeNo ? String(row[COL.officeNo] ?? '').trim() : '';
       const notes = COL.notes ? String(row[COL.notes] ?? '').trim() : '';
       const sq = parseFloat(String(COL.sqft ? row[COL.sqft] : '').replace(/[,\s]/g, '')) || '';
@@ -305,8 +322,8 @@ async function convert() {
         "Office/Unit Number":         o,
         "Floor":                      parseFloor(o),
         "Square footage":             sq,
-        "Price per month":            parsePrice(COL.price ? row[COL.price] : ''),
-        "Desk capacity":              COL.desks ? String(row[COL.desks] ?? '').trim() : '',
+        "Price per month":            parsedPrice,
+        "Desk capacity":              String(rawDesks).trim(),
         "Available from":             parseDate(COL.date ? row[COL.date] : ''),
         "Min term (months)":          3,
         "Max term (months)":          24,
@@ -316,7 +333,7 @@ async function convert() {
       });
     }
     const names = Object.keys(buildings);
-    if (!names.length) throw new Error('No building data found. Check the file format.');
+    if (!names.length) throw new Error('No building data found after filtering. Check the file format.');
     const zip = new JSZip();
     names.forEach(n => {
       const csvRows = [OUTPUT_HEADERS, ...buildings[n].map(r => OUTPUT_HEADERS.map(h => r[h] ?? ''))];
@@ -329,7 +346,12 @@ async function convert() {
     const a = document.createElement('a');
     a.href = url; a.download = 'Django Ready Building Output - Fora - Date ' + date + '.zip';
     a.click(); URL.revokeObjectURL(url);
-    setStatus('success', '✓ Done — ' + names.length + ' CSV' + (names.length !== 1 ? 's' : '') + ' downloaded.');
+
+    // Build summary message
+    let msg = '✓ Done — ' + names.length + ' CSV' + (names.length !== 1 ? 's' : '') + ' downloaded.';
+    if (skippedUnderOffer > 0) msg += ' ' + skippedUnderOffer + ' under offer skipped.';
+    if (skippedMissingFields > 0) msg += ' ' + skippedMissingFields + ' skipped (missing price or desk capacity).';
+    setStatus('success', msg);
   } catch(err) {
     setStatus('error', 'Error: ' + err.message);
   }
