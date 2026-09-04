@@ -141,6 +141,7 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 0.55rem; font-weight: 900; color: #fff;
   }
+  .rule-dot.skip { background: linear-gradient(135deg, #dc2626, #b91c1c); }
   code {
     background: rgba(234,88,12,0.08); color: var(--teal-dk);
     font-size: 0.75rem; padding: 1px 5px; border-radius: 4px;
@@ -193,7 +194,8 @@
       <div class="rule"><div class="rule-dot">✓</div><span><b>What's not included</b>: blank</span></div>
       <div class="rule"><div class="rule-dot">✓</div><span><b>Min term (months)</b>: 3 &nbsp;|&nbsp; <b>Max term (months)</b>: blank</span></div>
       <div class="rule"><div class="rule-dot">✓</div><span><b>Number of additional rooms</b> ← extracted from <code>Comments</code> (numbered meeting rooms/MRs/boardrooms), else blank</span></div>
-      <div class="rule"><div class="rule-dot">✓</div>Rows where <code>Status</code> ≠ "Available" are skipped</div>
+      <div class="rule"><div class="rule-dot skip">✗</div>Rows where <code>Status</code> ≠ "Available" are skipped</div>
+      <div class="rule"><div class="rule-dot skip">✗</div>Rows missing <code>Price per month</code> or <code>Desk capacity</code> are skipped</div>
     </div>
   </details>
 </div>
@@ -240,8 +242,6 @@ function loadFile(f) {
 
   const reader = new FileReader();
   reader.onload = ev => {
-    // Use TextDecoder via ArrayBuffer — more reliable than readAsText(f, 'windows-1252')
-    // which some browsers silently ignore and fall back to UTF-8, mangling £ signs.
     try {
       csvText = new TextDecoder('windows-1252').decode(ev.target.result);
     } catch(e) {
@@ -282,15 +282,14 @@ function parseFloor(raw) {
   const s = String(raw || '').trim();
   if (s === '' || s === 'null') return '';
   const n = parseInt(s, 10);
-  if (isNaN(n)) return s;   // non-numeric: pass through
+  if (isNaN(n)) return s;
   if (n === 0)  return 'Ground';
   if (n === -1) return 'Basement';
-  return n;                  // positive integer: pass through as number
+  return n;
 }
 
 function parsePrice(raw) {
   if (!raw) return '';
-  // Strip everything except digits and decimal point — handles £, \uFFFD, commas, spaces
   const n = parseFloat(String(raw).replace(/[^0-9.]/g, ''));
   return isNaN(n) ? '' : Math.ceil(n);
 }
@@ -306,7 +305,6 @@ function parseAvailableFrom(raw) {
   const s = String(raw).trim();
   if (!s || /available|now|immediate|tbc|tba|enquire/i.test(s)) return '';
 
-  // dd/mm/yyyy
   const parts = s.split('/');
   if (parts.length === 3) {
     const [d, m, y] = parts;
@@ -318,7 +316,6 @@ function parseAvailableFrom(raw) {
     }
   }
 
-  // Fallback: try generic parse
   const dt = new Date(s); dt.setHours(0,0,0,0);
   if (isNaN(dt.getTime()) || dt <= TODAY) return '';
   return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
@@ -331,19 +328,13 @@ function parseOfficePosition(raw) {
   return '';
 }
 
-// Extract count of meeting rooms / boardrooms / MRs from Comments
 function extractAdditionalRooms(note) {
   if (!note) return '';
   const s = String(note);
-
-  // Strip desk counts first to prevent number bleed
   const clean = s.replace(/\b\d+\s*(?:[–\-]\s*\d+)?\s*desks?\b/gi, '');
 
-  // Pattern 1: explicit number before MR-type keyword
   const reExplicit = /\b(\d+)\s*(?:x\s*)?(?:\w+\s+){0,3}(?:meeting\s+rooms?|boardrooms?|board\s+rooms?|MRs?\b|meeting\s+pods?)/gi;
-  // Pattern 2: "internal meeting room" with no preceding number
   const reInternal = /(?<!\d\s)internal\s+meeting\s+rooms?\b/gi;
-  // Pattern 3: "N-person meeting room" style (explicit count = 1 per match)
   const rePerson   = /\b\d+[\-–](?:\d+\s+)?(?:person|pax|seat)\s+(?:\w+\s+){0,2}(?:meeting\s+rooms?|meeting\s+pods?|boardrooms?)/gi;
 
   let total = 0, m;
@@ -352,6 +343,11 @@ function extractAdditionalRooms(note) {
   if (total === 0) total += (clean.match(rePerson)   || []).length;
 
   return total > 0 ? String(total) : '';
+}
+
+// ── Blank check ───────────────────────────────────────────────────────────
+function isBlank(val) {
+  return val === null || val === undefined || String(val).trim() === '';
 }
 
 // ── CSV serialiser ────────────────────────────────────────────────────────
@@ -390,7 +386,6 @@ async function convert() {
     const rows = parseCSV(csvText);
     if (rows.length < 2) throw new Error('File appears empty or unreadable.');
 
-    // Support files with a duplicate header row at top (seen in sample)
     let headerRow = 0;
     for (let i = 0; i < Math.min(3, rows.length); i++) {
       if (rows[i].some(c => /building/i.test(c))) { headerRow = i; break; }
@@ -416,17 +411,24 @@ async function convert() {
     if (iPrice    < 0) throw new Error('No "Listing Price (Monthly)" column found.');
 
     const buildings = {};
-    let totalRows = 0, skippedRows = 0;
+    let totalRows = 0, skippedStatus = 0, skippedMissing = 0;
 
     data.forEach(row => {
       const building = String(row[iBuilding] || '').trim();
       if (!building) return;
 
-      // Skip rows where Status ≠ "Available"
+      // Skip: status ≠ available
       if (iStatus >= 0) {
         const status = String(row[iStatus] || '').trim().toLowerCase();
-        if (status && status !== 'available') { skippedRows++; return; }
+        if (status && status !== 'available') { skippedStatus++; return; }
       }
+
+      // Skip: missing price or desk capacity
+      const rawPrice = iPrice    >= 0 ? row[iPrice]   : '';
+      const rawDesks = iDesksTo  >= 0 ? row[iDesksTo] : '';
+      const parsedPrice = parsePrice(rawPrice);
+      if (isBlank(rawPrice) || parsedPrice === '') { skippedMissing++; return; }
+      if (isBlank(rawDesks))                        { skippedMissing++; return; }
 
       totalRows++;
       if (!buildings[building]) buildings[building] = [];
@@ -437,8 +439,8 @@ async function convert() {
       buildings[building].push({
         "Office/Unit Number":         spaceName,
         "Square footage":             parseSqft(iSqft >= 0 ? row[iSqft] : ''),
-        "Desk capacity":              iDesksTo >= 0 ? String(row[iDesksTo] || '').trim() : '',
-        "Price per month":            parsePrice(iPrice >= 0 ? row[iPrice] : ''),
+        "Desk capacity":              String(rawDesks).trim(),
+        "Price per month":            parsedPrice,
         "Floor":                      parseFloor(iFloor >= 0 ? row[iFloor] : ''),
         "Min term (months)":          3,
         "Max term (months)":          '',
@@ -451,7 +453,7 @@ async function convert() {
     });
 
     const buildingNames = Object.keys(buildings);
-    if (!buildingNames.length) throw new Error('No "Available" listings found in the file.');
+    if (!buildingNames.length) throw new Error('No valid listings found after filtering. Check the file format.');
 
     // Build ZIP
     const zip = new JSZip();
@@ -472,14 +474,17 @@ async function convert() {
     a.href = url; a.download = `Django Ready Building Output - Elementa - Date ${dateStr}.zip`;
     a.click(); URL.revokeObjectURL(url);
 
-    // Show stats
+    // Show stats — skipped total combines both skip reasons
+    const totalSkipped = skippedStatus + skippedMissing;
     document.getElementById('sBldgs').textContent   = buildingNames.length;
-    document.getElementById('sRows').textContent     = totalRows;
-    document.getElementById('sSkipped').textContent  = skippedRows;
+    document.getElementById('sRows').textContent    = totalRows;
+    document.getElementById('sSkipped').textContent = totalSkipped;
     document.getElementById('statsBar').classList.add('show');
 
-    st.textContent = `✓ Done — ${buildingNames.length} building CSVs downloaded.`;
-    st.className = 'status success';
+    let msg = `✓ Done — ${buildingNames.length} building CSV${buildingNames.length !== 1 ? 's' : ''} downloaded.`;
+    if (skippedStatus  > 0) msg += ` ${skippedStatus} skipped (not available).`;
+    if (skippedMissing > 0) msg += ` ${skippedMissing} skipped (missing price or desk capacity).`;
+    st.textContent = msg; st.className = 'status success';
 
   } catch (err) {
     st.textContent = 'Error: ' + err.message;
