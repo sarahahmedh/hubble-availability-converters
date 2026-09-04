@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alternative Space Email</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root{
+    --brand: #e70f67;
+    --brand-dark: #b50a50;
+    --brand-light: rgba(231,15,103,0.08);
+    --brand-faint: rgba(231,15,103,0.04);
+    --brand-border: rgba(231,15,103,0.22);
+    --brand-glow: rgba(231,15,103,0.3);
+    --bg-a: #fff0f6;
+    --bg-b: #fdf0f8;
+    --text-dark: #1a0010;
+    --text-muted: rgba(90,0,48,0.52);
+    --green: #00a86b;
+    --green-bg: #f0fdf7;
+    --card-bg: rgba(255,255,255,0.82);
+    --panel-bg: rgba(231,15,103,0.025);
+    --panel-border: rgba(231,15,103,0.11);
+    --shadow: 0 8px 40px rgba(231,15,103,0.09), 0 2px 12px rgba(90,0,48,0.05);
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+
+  body{
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--bg-a) 0%, var(--bg-b) 100%);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 48px 16px 80px;
+    color: var(--text-dark);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .header{ text-align: center; margin-bottom: 28px; max-width: 640px; }
+  .badge{
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--brand); color: #fff;
+    font-size: 0.67rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 5px 14px; border-radius: 999px;
+    margin-bottom: 16px;
+  }
+  .badge-dot{ width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.65); }
+  .header h1{ font-size: 2rem; font-weight: 800; color: var(--text-dark); letter-spacing: -0.04em; margin-bottom: 8px; }
+  .header h1 em{ font-style: normal; color: var(--brand); }
+  .header .sub{ color: var(--text-muted); font-size: 0.875rem; line-height: 1.5; }
+
+  .card{
+    background: var(--card-bg); backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.95); border-radius: 22px;
+    padding: 32px; width: 100%; max-width: 900px;
+    box-shadow: var(--shadow);
+  }
+
+  .mode-toggle{
+    display: flex; gap: 4px; margin-bottom: 22px;
+    background: var(--brand-faint); border-radius: 12px; padding: 4px;
+    border: 1px solid var(--panel-border);
+  }
+  .mode-btn{
+    flex: 1; padding: 9px 12px; border-radius: 9px; border: none;
+    font-family: inherit; font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; transition: all 0.15s; color: var(--text-muted);
+    background: transparent;
+  }
+  .mode-btn.active{ background: var(--brand); color: #fff; box-shadow: 0 2px 10px var(--brand-glow); }
+  .mode-btn:hover:not(.active){ color: var(--brand); background: var(--brand-light); }
+
+  .paste-panel{ margin-bottom: 20px; }
+  .paste-panel h2, .panel h2{
+    font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--text-muted); margin-bottom: 10px;
+  }
+  .paste-panel h2 .hint, .panel h2 .hint{ text-transform: none; font-weight: 500; letter-spacing: 0; }
+
+  .paste-panel textarea{
+    width: 100%; min-height: 150px; padding: 14px;
+    border: 1.5px solid var(--brand-border); border-radius: 12px;
+    font-family: 'Inter', monospace; font-size: 0.8rem; line-height: 1.65;
+    color: var(--text-dark); background: #fff; resize: vertical;
+    transition: border-color 0.15s;
+  }
+  .paste-panel textarea:focus{ outline: none; border-color: var(--brand); }
+  .paste-panel textarea::placeholder{ color: var(--text-muted); opacity: 0.7; }
+
+  .paste-status{ font-size: 0.72rem; margin-top: 8px; min-height: 15px; color: var(--text-muted); }
+  .paste-status.found{ color: var(--brand); font-weight: 600; }
+
+  .grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 760px){ .grid{ grid-template-columns: 1fr; } }
+
+  .panel{
+    background: var(--panel-bg); border: 1px solid var(--panel-border);
+    border-radius: 16px; padding: 22px;
+  }
+
+  .field{ margin-bottom: 14px; }
+  .field:last-child{ margin-bottom: 0; }
+  .field label{
+    display: block; font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--text-muted); margin-bottom: 6px;
+  }
+  .field .hint{ text-transform: none; font-weight: 400; letter-spacing: 0; color: var(--text-muted); }
+  .field input{
+    width: 100%; padding: 9px 11px; border: 1px solid var(--brand-border);
+    border-radius: 9px; font-size: 0.85rem; font-family: inherit;
+    color: var(--text-dark); background: #fff; transition: border-color 0.15s;
+  }
+  .field input:focus{ outline: none; border-color: var(--brand); }
+  .field input::placeholder{ color: var(--text-muted); opacity: 0.55; }
+
+  .email-card{
+    border: 1px solid var(--brand-border); border-radius: 14px; overflow: hidden; background: #fff;
+  }
+  .email-meta{
+    background: var(--brand-faint); border-bottom: 1px solid var(--panel-border);
+    padding: 10px 16px; font-size: 0.7rem; color: var(--text-muted); font-family: var(--mono);
+  }
+  .email-body{
+    padding: 20px 18px; font-size: 0.85rem; line-height: 1.7;
+    min-height: 160px; white-space: pre-wrap; color: var(--text-dark);
+  }
+  .email-body .missing{ color: var(--brand); background: var(--brand-light); padding: 0 4px; border-radius: 4px; }
+  .email-body a{ color: var(--brand); font-weight: 600; }
+  .email-body strong{ color: var(--text-dark); }
+
+  .actions{ display: flex; gap: 10px; margin-top: 14px; }
+  button{
+    font-family: inherit; font-size: 0.84rem; font-weight: 700;
+    padding: 10px 18px; border-radius: 11px; border: 1.5px solid transparent;
+    cursor: pointer; transition: all 0.18s; letter-spacing: -0.01em;
+  }
+  .btn-primary{ background: var(--brand); color: #fff; box-shadow: 0 4px 20px var(--brand-glow); }
+  .btn-primary:hover{ background: var(--brand-dark); transform: translateY(-1px); box-shadow: 0 6px 28px var(--brand-glow); }
+  .btn-primary:disabled{ background: rgba(231,15,103,0.35); box-shadow: none; cursor: not-allowed; transform: none; }
+  .btn-secondary{ background: transparent; border-color: var(--brand-border); color: var(--text-muted); }
+  .btn-secondary:hover{ border-color: var(--brand); color: var(--brand); }
+
+  .status{ font-size: 0.78rem; color: var(--green); margin-top: 10px; min-height: 16px; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="badge"><span class="badge-dot"></span> Hubble Support Tools <span class="badge-dot"></span></div>
+  <h1>Alternative <em>Space</em> Email</h1>
+  <p class="sub">Paste the whole email thread below — the host's reply and the forwarded Hubble booking both work in one go. Check the detected fields, then copy the email across.</p>
+</div>
+
+<div class="card">
+  <div class="mode-toggle">
+    <button type="button" class="mode-btn active" id="modeOfficeBtn">🏢 Private Day Office</button>
+    <button type="button" class="mode-btn" id="modeMeetingBtn">🗓️ Meeting Room</button>
+  </div>
+
+  <div class="paste-panel">
+    <h2>Paste email thread</h2>
+    <textarea id="pasteBox" placeholder="Paste the full email thread here — host reply and the original Hubble booking request..."></textarea>
+    <div class="paste-status" id="pasteStatus"></div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Detected details <span class="hint">(edit if anything's off)</span></h2>
+      <div class="field">
+        <label for="original">Original building requested</label>
+        <input id="original" type="text" placeholder="e.g. Fora Borough">
+      </div>
+      <div class="field">
+        <label for="date">Date requested</label>
+        <input id="date" type="text" placeholder="e.g. 14 September">
+      </div>
+      <div class="field" id="reqCapacityField" style="display:none;">
+        <label for="reqCapacity">Requested room size <span class="hint">(people, meeting rooms only)</span></label>
+        <input id="reqCapacity" type="text" placeholder="e.g. 6">
+      </div>
+      <div class="field" id="altOfficeField">
+        <label for="alternative">Alternative offered by host</label>
+        <input id="alternative" type="text" placeholder="e.g. Uncommon Borough">
+      </div>
+      <div class="field" id="altRoomField" style="display:none;">
+        <label for="altCapacity">Alternative meeting room size <span class="hint">(people)</span></label>
+        <input id="altCapacity" type="text" placeholder="e.g. 8">
+      </div>
+      <div class="field" id="altBuildingField" style="display:none;">
+        <label for="altBuilding">Alternative building <span class="hint">(optional — only if the host offered a different building)</span></label>
+        <input id="altBuilding" type="text" placeholder="e.g. Fora Paddington">
+      </div>
+      <div class="field">
+        <label for="link">Booking link <span class="hint">(optional — links the word "here")</span></label>
+        <input id="link" type="url" placeholder="https://...">
+      </div>
+      <div class="field">
+        <label for="name">Customer name <span class="hint">(optional)</span></label>
+        <input id="name" type="text" placeholder="e.g. Priya">
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Preview</h2>
+      <div class="email-card">
+        <div class="email-meta">To: customer</div>
+        <div class="email-body" id="preview"></div>
+      </div>
+      <div class="actions">
+        <button class="btn-primary" id="copyBtn">Copy email</button>
+        <button class="btn-secondary" id="resetBtn">Clear</button>
+      </div>
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const pasteBox = document.getElementById('pasteBox');
+  const pasteStatus = document.getElementById('pasteStatus');
+  const original = document.getElementById('original');
+  const date = document.getElementById('date');
+  const reqCapacity = document.getElementById('reqCapacity');
+  const alternative = document.getElementById('alternative');
+  const altCapacity = document.getElementById('altCapacity');
+  const altBuilding = document.getElementById('altBuilding');
+  const link = document.getElementById('link');
+  const name = document.getElementById('name');
+  const preview = document.getElementById('preview');
+  const copyBtn = document.getElementById('copyBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const status = document.getElementById('status');
+  const modeOfficeBtn = document.getElementById('modeOfficeBtn');
+  const modeMeetingBtn = document.getElementById('modeMeetingBtn');
+  const reqCapacityField = document.getElementById('reqCapacityField');
+  const altOfficeField = document.getElementById('altOfficeField');
+  const altRoomField = document.getElementById('altRoomField');
+  const altBuildingField = document.getElementById('altBuildingField');
+
+  let currentMode = 'office';
+
+  function setMode(newMode){
+    currentMode = newMode;
+    const isMeeting = newMode === 'meeting';
+    modeOfficeBtn.classList.toggle('active', !isMeeting);
+    modeMeetingBtn.classList.toggle('active', isMeeting);
+    reqCapacityField.style.display = isMeeting ? 'block' : 'none';
+    altRoomField.style.display = isMeeting ? 'block' : 'none';
+    altBuildingField.style.display = isMeeting ? 'block' : 'none';
+    altOfficeField.style.display = isMeeting ? 'none' : 'block';
+    if (pasteBox.value.trim()) parsePaste(); else render();
+  }
+
+  modeOfficeBtn.addEventListener('click', () => setMode('office'));
+  modeMeetingBtn.addEventListener('click', () => setMode('meeting'));
+
+  function esc(s){
+    const d = document.createElement('div');
+    d.innerText = s;
+    return d.innerHTML;
+  }
+
+  function placeholder(field, text){
+    return field.trim()
+      ? esc(field.trim())
+      : '<span class="missing">' + text + '</span>';
+  }
+
+  function article(numStr){
+    const n = parseInt(numStr, 10);
+    if (isNaN(n)) return 'a';
+    if (n === 8 || n === 11 || n === 18) return 'an';
+    if (n >= 80 && n <= 89) return 'an';
+    if (n >= 800 && n <= 899) return 'an';
+    return 'a';
+  }
+
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const MONTH_LOOKUP = {};
+  MONTHS.forEach((m, i) => {
+    MONTH_LOOKUP[m.toLowerCase()] = i;
+    MONTH_LOOKUP[m.slice(0,3).toLowerCase()] = i;
+  });
+  MONTH_LOOKUP['sept'] = 8;
+
+  function ordinal(n){
+    const j = n % 10, k = n % 100;
+    if (j === 1 && k !== 11) return n + 'st';
+    if (j === 2 && k !== 12) return n + 'nd';
+    if (j === 3 && k !== 13) return n + 'rd';
+    return n + 'th';
+  }
+
+  const WEEKDAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  function extractWeekday(text){
+    const m = text.match(/\b(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)\b/i);
+    return m ? m[1][0].toUpperCase() + m[1].slice(1).toLowerCase() : null;
+  }
+
+  function guessYear(day, monthIdx){
+    const now = new Date();
+    const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    let year = now.getFullYear();
+    const candidate = new Date(year, monthIdx, day);
+    if (candidate < todayMid) year += 1;
+    return year;
+  }
+
+  function normalizeDate(raw){
+    if (!raw) return raw;
+    const text = raw.trim();
+
+    // "11th Sep", "Friday 11th September", "11 Sept 2026"
+    let m = text.match(/(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)(?:\s+(\d{4}))?/);
+    if (m){
+      const day = parseInt(m[1], 10);
+      const monthIdx = MONTH_LOOKUP[m[2].toLowerCase()];
+      if (monthIdx !== undefined){
+        const explicitYear = m[3] ? parseInt(m[3], 10) : null;
+        let weekday = extractWeekday(text);
+        if (!weekday){
+          const year = explicitYear || guessYear(day, monthIdx);
+          weekday = WEEKDAYS[new Date(year, monthIdx, day).getDay()];
+        }
+        const datePart = ordinal(day) + ' ' + MONTHS[monthIdx] + (explicitYear ? ' ' + explicitYear : '');
+        return weekday + ', ' + datePart;
+      }
+    }
+
+    // "11/09/2026" (DD/MM/YYYY)
+    m = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (m){
+      const day = parseInt(m[1], 10);
+      const monthIdx = parseInt(m[2], 10) - 1;
+      const year = parseInt(m[3], 10);
+      if (monthIdx >= 0 && monthIdx < 12){
+        const weekday = WEEKDAYS[new Date(year, monthIdx, day).getDay()];
+        return weekday + ', ' + ordinal(day) + ' ' + MONTHS[monthIdx] + ' ' + year;
+      }
+    }
+
+    return text;
+  }
+
+  function buildPlainText(){
+    const greeting = name.value.trim() ? `Hi ${name.value.trim()},` : 'Hi,';
+    const origText = original.value.trim() || '[original building]';
+    const dateText = normalizeDate(date.value) || '[date]';
+    const linkText = link.value.trim();
+    const bookingLine = linkText
+      ? `If that works, you can book it in just here: ${linkText}`
+      : `If that works, you can book it in just here.`;
+
+    if (currentMode === 'meeting'){
+      const capacityText = altCapacity.value.trim();
+      const altBuildingText = altBuilding.value.trim();
+      let roomDisplay = '[meeting room size]';
+      if (capacityText){
+        roomDisplay = `${article(capacityText)} ${capacityText} person room`;
+        if (altBuildingText) roomDisplay += ` at ${altBuildingText}`;
+      }
+      const reqCapacityText = reqCapacity.value.trim();
+      const reqPhrase = reqCapacityText ? `${reqCapacityText} person room` : 'room';
+      return `${greeting}\n\nHope you're well!\n\nUnfortunately, ${origText} doesn't have availability for your ${reqPhrase} request for ${dateText}, but they've offered ${roomDisplay} instead.\n\n${bookingLine}`;
+    }
+
+    const altText = alternative.value.trim() || '[alternative building]';
+    return `${greeting}\n\nHope you're well!\n\nUnfortunately, ${origText} doesn't have availability for your private day office request on ${dateText}, but they've offered ${altText} instead.\n\n${bookingLine}`;
+  }
+
+  function render(){
+    const greeting = name.value.trim() ? `Hi ${esc(name.value.trim())},` : 'Hi,';
+    const origHtml = '<strong>' + placeholder(original.value, 'original building') + '</strong>';
+    const dateHtml = '<strong>' + placeholder(normalizeDate(date.value), 'date') + '</strong>';
+    const linkVal = link.value.trim();
+
+    let bookingLine;
+    if (linkVal){
+      bookingLine = `If that works, you can book it in just <a href="${esc(linkVal)}" target="_blank" rel="noopener">here</a>.`;
+    } else {
+      bookingLine = `If that works, you can book it in just here.`;
+    }
+
+    if (currentMode === 'meeting'){
+      const capVal = altCapacity.value.trim();
+      const altBuildingVal = altBuilding.value.trim();
+      let roomPhrase = '';
+      if (capVal){
+        roomPhrase = `${article(capVal)} ${capVal} person room`;
+        if (altBuildingVal) roomPhrase += ` at ${altBuildingVal}`;
+      }
+      const roomInner = capVal ? esc(roomPhrase) : '<span class="missing">alternative meeting room</span>';
+      const roomHtml = (linkVal && capVal)
+        ? `<strong><a href="${esc(linkVal)}" target="_blank" rel="noopener">${roomInner}</a></strong>`
+        : `<strong>${roomInner}</strong>`;
+      const reqCapVal = placeholder(reqCapacity.value, 'room size');
+      const reqHtml = '<strong>' + reqCapVal + ' person room</strong>';
+
+      preview.innerHTML =
+        `${greeting}<br><br>Hope you're well!<br><br>Unfortunately, ${origHtml} doesn't have availability for your ${reqHtml} request for ${dateHtml}, but they've offered ${roomHtml} instead.<br><br>${bookingLine}`;
+
+      copyBtn.disabled = !(original.value.trim() && date.value.trim() && reqCapacity.value.trim() && capVal);
+      return;
+    }
+
+    const altPlain = placeholder(alternative.value, 'alternative building');
+    const altHtml = (linkVal && alternative.value.trim())
+      ? `<strong><a href="${esc(linkVal)}" target="_blank" rel="noopener">${altPlain}</a></strong>`
+      : `<strong>${altPlain}</strong>`;
+
+    preview.innerHTML =
+      `${greeting}<br><br>Hope you're well!<br><br>Unfortunately, ${origHtml} doesn't have availability for your private day office request on ${dateHtml}, but they've offered ${altHtml} instead.<br><br>${bookingLine}`;
+
+    copyBtn.disabled = !(original.value.trim() && date.value.trim() && alternative.value.trim());
+  }
+
+  function detectAlternative(text){
+    const patterns = [
+      /(?:checked and|confirmed that)\s+([A-Z0-9][A-Za-z0-9 ,'&\-]{2,60}?)\s+(?:have|has|is|are|would)\s+availability/i,
+      /(?:have offered|offered|can offer|offering)\s+([A-Z0-9][A-Za-z0-9 ,'&\-]{2,60}?)(?:\s+instead|\s+as an alternative|[.,\n])/i,
+      /([A-Z0-9][A-Za-z0-9 ,'&\-]{2,60}?)\s+(?:have|has)\s+availability/i,
+      /(?:suggest|recommend|propose)\s+([A-Z0-9][A-Za-z0-9 ,'&\-]{2,60}?)\b/i
+    ];
+    for (const p of patterns){
+      const m = text.match(p);
+      if (m) return m[1].trim();
+    }
+    return null;
+  }
+
+  function detectAltCapacity(text){
+    let m = text.match(/(\d+)\s*person\s+[A-Za-z0-9][A-Za-z0-9 \-]{0,30}?\s+(?:is |are |)?(?:free|available)\b/i);
+    if (m) return m[1];
+
+    m = text.match(/[A-Za-z0-9][A-Za-z0-9 \-]{0,30}?\s*\(?(\d+)\s*person\)?\s+(?:is |are |)?(?:free|available)\b/i);
+    if (m) return m[1];
+
+    m = text.match(/(\d+)\s*person\b/i);
+    if (m) return m[1];
+
+    return null;
+  }
+
+  function parsePaste(){
+    const text = pasteBox.value;
+    if (!text.trim()){
+      pasteStatus.textContent = '';
+      pasteStatus.className = 'paste-status';
+      return;
+    }
+    const buildingMatch = text.match(/Building Name:\s*(.+)/i);
+    const dateMatch = text.match(/Date:\s*(.+)/i);
+    const nameMatch = text.match(/^Name:\s*(.+)$/im);
+
+    const found = [];
+    if (buildingMatch){
+      original.value = buildingMatch[1].trim();
+      found.push('building');
+    }
+    if (dateMatch){
+      date.value = dateMatch[1].trim();
+      found.push('date');
+    }
+    if (nameMatch){
+      name.value = nameMatch[1].trim().split(/\s+/)[0];
+      found.push('customer name');
+    }
+
+    if (currentMode === 'meeting'){
+      const reqSizeMatch = text.match(/(\d+)\s*-\s*£/);
+      if (reqSizeMatch){
+        reqCapacity.value = reqSizeMatch[1];
+        found.push('requested size');
+      }
+      const altCapVal = detectAltCapacity(text);
+      if (altCapVal){
+        altCapacity.value = altCapVal;
+        found.push('meeting room size');
+      }
+    } else {
+      const altFound = detectAlternative(text);
+      if (altFound){
+        alternative.value = altFound;
+        found.push('alternative');
+      }
+    }
+
+    if (found.length){
+      pasteStatus.textContent = 'Detected ' + found.join(', ') + " — check them below, then copy.";
+      pasteStatus.className = 'paste-status found';
+    } else {
+      pasteStatus.textContent = "Couldn't detect any details from that — enter them manually below.";
+      pasteStatus.className = 'paste-status';
+    }
+    render();
+  }
+
+  pasteBox.addEventListener('input', parsePaste);
+  [original, date, reqCapacity, alternative, altCapacity, altBuilding, link, name].forEach(el => el.addEventListener('input', render));
+
+  copyBtn.addEventListener('click', async () => {
+    const plainText = buildPlainText();
+    const htmlText = preview.innerHTML;
+    let copied = false;
+
+    try {
+      if (window.ClipboardItem){
+        const item = new ClipboardItem({
+          'text/plain': new Blob([plainText], { type: 'text/plain' }),
+          'text/html': new Blob([htmlText], { type: 'text/html' })
+        });
+        await navigator.clipboard.write([item]);
+        copied = true;
+      }
+    } catch (e) { /* fall through to plain text */ }
+
+    if (!copied){
+      try {
+        await navigator.clipboard.writeText(plainText);
+        copied = true;
+      } catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = plainText;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        copied = true;
+      }
+    }
+
+    status.textContent = copied ? 'Copied — bold and links will paste into rich text editors.' : 'Copy failed — select and copy manually.';
+    setTimeout(() => status.textContent = '', 2800);
+  });
+
+  resetBtn.addEventListener('click', () => {
+    [original, date, reqCapacity, alternative, altCapacity, altBuilding, link, name].forEach(el => el.value = '');
+    pasteBox.value = '';
+    pasteStatus.textContent = '';
+    pasteStatus.className = 'paste-status';
+    render();
+    status.textContent = '';
+  });
+
+  render();
+</script>
+</body>
+</html>
