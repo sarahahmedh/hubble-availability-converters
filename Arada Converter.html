@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arada London — Availability Converter</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --brand: #e70f67; --brand-dark: #b50a50;
+    --brand-light: rgba(231,15,103,0.08); --brand-faint: rgba(231,15,103,0.04);
+    --brand-border: rgba(231,15,103,0.22); --brand-glow: rgba(231,15,103,0.3);
+    --bg-a: #fff0f6; --bg-b: #fdf0f8; --text-dark: #1a0010;
+    --text-muted: rgba(90,0,48,0.52); --green: #00a86b; --green-bg: #f0fdf7;
+    --card-bg: rgba(255,255,255,0.82); --panel-bg: rgba(231,15,103,0.025);
+    --panel-border: rgba(231,15,103,0.11);
+    --shadow: 0 8px 40px rgba(231,15,103,0.09), 0 2px 12px rgba(90,0,48,0.05);
+  }
+  body { font-family:'Inter',system-ui,sans-serif; min-height:100vh;
+    background:linear-gradient(135deg,var(--bg-a) 0%,var(--bg-b) 100%);
+    display:flex; flex-direction:column; align-items:center; padding:48px 16px 80px; }
+  .header { text-align:center; margin-bottom:36px; }
+  .badge { display:inline-flex; align-items:center; gap:6px; background:var(--brand);
+    color:#fff; font-size:0.67rem; font-weight:700; letter-spacing:0.1em;
+    text-transform:uppercase; padding:5px 14px; border-radius:999px; margin-bottom:16px; }
+  .badge-dot { width:5px; height:5px; border-radius:50%; background:rgba(255,255,255,0.65); }
+  h1 { font-size:2rem; font-weight:800; color:var(--text-dark); letter-spacing:-0.04em; margin-bottom:8px; }
+  h1 em { font-style:normal; color:var(--brand); }
+  p.sub { color:var(--text-muted); font-size:0.875rem; }
+  .card { background:var(--card-bg); backdrop-filter:blur(24px);
+    border:1px solid rgba(255,255,255,0.95); border-radius:22px;
+    padding:32px; width:100%; max-width:650px; box-shadow:var(--shadow); }
+  .upload-area { border:2px dashed var(--brand-border); border-radius:16px;
+    padding:44px 20px; text-align:center; cursor:pointer; transition:all 0.18s;
+    margin-bottom:20px; background:var(--brand-faint); }
+  .upload-area:hover,.upload-area.drag { border-color:var(--brand); background:var(--brand-light); }
+  .upload-area input { display:none; }
+  .upload-icon { width:60px; height:60px; background:#fff; border:1.5px solid var(--brand-border);
+    border-radius:16px; display:flex; align-items:center; justify-content:center;
+    font-size:1.7rem; margin:0 auto 16px; }
+  .upload-area p { font-size:0.875rem; color:var(--text-muted); line-height:1.6; }
+  .upload-area strong { color:var(--text-dark); }
+  .file-pill { display:inline-block; margin-top:14px; background:var(--brand); color:#fff;
+    font-size:0.72rem; font-weight:600; padding:5px 14px; border-radius:999px; }
+  .progress-bar-wrap { display:none; height:4px; background:var(--brand-border);
+    border-radius:4px; margin-bottom:18px; overflow:hidden; }
+  .progress-bar { height:100%; background:var(--brand); border-radius:4px; transition:width 0.25s; width:0%; }
+  .summary-row { display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+  .summary-stat { background:var(--panel-bg); border:1px solid var(--panel-border);
+    border-radius:12px; padding:14px 18px; flex:1; min-width:110px; }
+  .summary-stat strong { display:block; font-size:1.5rem; font-weight:800; color:var(--text-dark);
+    letter-spacing:-0.04em; line-height:1; margin-bottom:4px; }
+  .summary-stat span { font-size:0.68rem; color:var(--text-muted); font-weight:500; }
+  .preview-panel { display:none; background:var(--panel-bg); border:1px solid var(--panel-border);
+    border-radius:14px; padding:16px; margin-bottom:20px; }
+  .preview-header { display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:12px; gap:8px; flex-wrap:wrap; }
+  .preview-title { font-size:0.65rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:0.07em; color:var(--brand); }
+  .building-tabs { display:flex; gap:4px; flex-wrap:wrap; }
+  .building-tab { font-size:0.65rem; font-weight:700; padding:4px 10px;
+    border:1px solid var(--brand-border); border-radius:6px; cursor:pointer;
+    background:#fff; color:var(--text-muted); transition:all 0.14s; font-family:inherit; }
+  .building-tab.active { background:var(--brand); color:#fff; border-color:var(--brand); }
+  .preview-scroll { overflow-x:auto; }
+  .preview-table { min-width:560px; width:100%; border-collapse:collapse; }
+  .preview-table th { font-size:0.61rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:0.05em; color:var(--text-muted); white-space:nowrap;
+    padding:4px 8px; text-align:left; border-bottom:1px solid var(--panel-border); }
+  .preview-table td { font-size:0.73rem; color:var(--text-dark); padding:5px 8px;
+    border-bottom:1px solid rgba(231,15,103,0.05); white-space:nowrap; }
+  .preview-table tr:last-child td { border-bottom:none; }
+  .tag { display:inline-block; padding:2px 8px; border-radius:999px; font-size:0.64rem; font-weight:600; }
+  .tag-now  { background:var(--green-bg); color:var(--green); }
+  .tag-soon { background:#f0f4ff; color:#3355cc; }
+  .muted { color:var(--text-muted); }
+  button.run { width:100%; padding:15px; background:var(--brand); color:#fff; border:none;
+    border-radius:13px; font-size:1rem; font-weight:700; cursor:pointer; transition:all 0.18s;
+    letter-spacing:-0.01em; box-shadow:0 4px 20px var(--brand-glow); font-family:inherit; }
+  button.run:hover { background:var(--brand-dark); transform:translateY(-1px); box-shadow:0 6px 28px var(--brand-glow); }
+  button.run:disabled { background:rgba(231,15,103,0.38); box-shadow:none; cursor:not-allowed; transform:none; }
+  .status { margin-top:14px; font-size:0.83rem; color:var(--text-muted); min-height:20px; text-align:center; }
+  .status.error   { color:#dc2626; font-weight:500; }
+  .status.success { color:var(--green); font-weight:600; }
+  .status.loading { color:var(--brand); }
+  .divider { height:1px; background:linear-gradient(90deg,transparent,var(--brand-border),transparent); margin:24px 0; }
+  details summary { font-size:0.68rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:0.09em; color:var(--brand); list-style:none;
+    display:flex; align-items:center; cursor:pointer; user-select:none; }
+  details summary::-webkit-details-marker { display:none; }
+  details summary::after { content:'▸'; margin-left:6px; font-size:0.75rem; transition:transform 0.2s; }
+  details[open] summary::after { transform:rotate(90deg); }
+  .rules-grid { display:flex; flex-direction:column; gap:7px; margin-top:12px; }
+  .rule { display:flex; align-items:flex-start; gap:9px; font-size:0.77rem;
+    color:var(--text-dark); opacity:0.75; line-height:1.45; }
+  .rule-dot { width:17px; height:17px; border-radius:50%; background:var(--brand); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.55rem; font-weight:800; color:#fff; margin-top:1px; }
+  .debug-box { display:none; margin-top:16px; background:#f8f8f8; border:1px solid #ddd;
+    border-radius:8px; padding:12px; font-size:0.68rem; font-family:monospace;
+    max-height:200px; overflow-y:auto; white-space:pre-wrap; color:#333; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="badge"><span class="badge-dot"></span> Arada London <span class="badge-dot"></span></div>
+  <h1>Availability <em>Converter</em></h1>
+  <p class="sub">Upload a PDF availability sheet · get one CSV per building, ready for Master Converter format</p>
+</div>
+
+<div class="card">
+  <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+    <div class="upload-icon">📄</div>
+    <p><strong>Click to upload</strong> or drag &amp; drop</p>
+    <p>Arada London availability PDF</p>
+    <div class="file-pill" id="fileName">No file selected</div>
+    <input type="file" id="fileInput" accept=".pdf">
+  </div>
+
+  <div class="progress-bar-wrap" id="progressWrap">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <div class="summary-row" id="summaryRow" style="display:none">
+    <div class="summary-stat"><strong id="statTotal">0</strong><span>Total suites</span></div>
+    <div class="summary-stat"><strong id="statSE">0</strong><span>Shoreditch Exchange</span></div>
+    <div class="summary-stat"><strong id="statLS">0</strong><span>Laundry Studios</span></div>
+    <div class="summary-stat"><strong id="statDate">—</strong><span>As at date</span></div>
+  </div>
+
+  <div class="preview-panel" id="previewPanel">
+    <div class="preview-header">
+      <div class="preview-title">Preview — <span id="previewCount">0</span> rows</div>
+      <div class="building-tabs" id="buildingTabs"></div>
+    </div>
+    <div class="preview-scroll">
+      <table class="preview-table">
+        <thead><tr id="previewHead"></tr></thead>
+        <tbody id="previewBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <button class="run" id="runBtn" onclick="doDownload()" disabled>Download CSVs</button>
+  <div class="status" id="status"></div>
+  <div class="debug-box" id="debugBox"></div>
+
+  <div class="divider"></div>
+
+  <details>
+    <summary>Output format &amp; rules</summary>
+    <div class="rules-grid">
+      <div class="rule"><div class="rule-dot">✓</div>Output matches Master Converter format: Floor · Office/Unit Number · Square footage · Desk capacity · Price per month · Min term · Max term · Available from · What's included · What's not included · Office position · Number of additional rooms</div>
+      <div class="rule"><div class="rule-dot">✓</div>One CSV per building, downloaded as a .zip — named Arada — [Building] — [date].csv</div>
+      <div class="rule"><div class="rule-dot">✓</div>Sorted smallest to largest by desk count within each building</div>
+      <div class="rule"><div class="rule-dot">✓</div>"Now" → blank Available from (same as Master Converter). Future dates preserved as written</div>
+      <div class="rule"><div class="rule-dot">✓</div>What's included: "* [Suite ref]" — same pattern as Master Converter</div>
+      <div class="rule"><div class="rule-dot">✓</div>Price per month = total monthly cost (£/desk × desks). £/desk written to Office position column is not used</div>
+      <div class="rule"><div class="rule-dot">✓</div>Number of additional rooms = meeting room count from PDF</div>
+    </div>
+  </details>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ── Master Converter output format ─────────────────────────────────────────────
+const OUTPUT_HEADERS = [
+  'Floor','Office/Unit Number','Square footage','Desk capacity','Price per month',
+  'Min term (months)','Max term (months)','Available from',
+  "What's included","What's not included",'Office position','Number of additional rooms'
+];
+const OUTPUT_KEYS = [
+  'floor','unit','sqft','desks','price',
+  'min_term','max_term','available',
+  'included','not_included','position','extra_rooms'
+];
+
+// ── State ──────────────────────────────────────────────────────────────────────
+let parsedBuildings = {};
+let pdfDate = '';
+let activePreviewBuilding = '';
+
+// ── Upload wiring ──────────────────────────────────────────────────────────────
+document.getElementById('fileInput').addEventListener('change', e => {
+  const f = e.target.files[0]; if (f) loadPDF(f);
+});
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag');
+  const f = e.dataTransfer.files[0]; if (f) loadPDF(f);
+});
+
+function setStatus(msg, cls='') {
+  const el = document.getElementById('status');
+  el.textContent = msg; el.className = 'status'+(cls?' '+cls:'');
+}
+function setProgress(pct) {
+  document.getElementById('progressWrap').style.display = 'block';
+  document.getElementById('progressBar').style.width = pct+'%';
+}
+function debug(msg) {
+  const box = document.getElementById('debugBox');
+  box.style.display = 'block';
+  box.textContent += msg + '\n';
+}
+function clearDebug() {
+  const box = document.getElementById('debugBox');
+  box.textContent = ''; box.style.display = 'none';
+}
+
+// ── PDF loading ────────────────────────────────────────────────────────────────
+async function loadPDF(file) {
+  document.getElementById('fileName').textContent = file.name;
+  document.getElementById('runBtn').disabled = true;
+  document.getElementById('previewPanel').style.display = 'none';
+  document.getElementById('summaryRow').style.display = 'none';
+  parsedBuildings = {}; pdfDate = '';
+  clearDebug();
+  setStatus('Reading PDF…','loading');
+  setProgress(5);
+
+  try {
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    setProgress(15);
+
+    // Extract all text items grouped by Y position into lines
+    // We collect (text, x, y, page) for every item then reconstruct lines
+    const rawItems = [];
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+      const content = await page.getTextContent();
+      for (const item of content.items) {
+        const t = item.str;
+        if (!t || !t.trim()) continue;
+        rawItems.push({
+          text: t.trim(),
+          x: Math.round(item.transform[4]),
+          y: Math.round(item.transform[5]),
+          page: p
+        });
+      }
+      setProgress(15 + Math.round(55 * p / pdf.numPages));
+    }
+
+    setProgress(72);
+
+    // Group into lines: same page + Y within 3px = same line
+    const lineMap = new Map();
+    for (const item of rawItems) {
+      // Round Y to nearest 3 for grouping
+      const yKey = item.page + '_' + (Math.round(item.y / 3) * 3);
+      if (!lineMap.has(yKey)) lineMap.set(yKey, { page: item.page, y: item.y, items: [] });
+      lineMap.get(yKey).items.push(item);
+    }
+
+    // Sort lines top-to-bottom per page (higher y = higher on page in PDF coords)
+    const lines = [...lineMap.values()].sort((a, b) =>
+      a.page !== b.page ? a.page - b.page : b.y - a.y
+    );
+
+    // Reconstruct line text sorted by x within each line
+    const textLines = lines.map(l => {
+      l.items.sort((a, b) => a.x - b.x);
+      return {
+        page: l.page,
+        y: l.y,
+        text: l.items.map(i => i.text).join(' '),
+        items: l.items
+      };
+    });
+
+    // Debug: show first 30 lines
+    debug('=== First 40 text lines ===');
+    textLines.slice(0, 40).forEach((l, i) => debug(`[${i}] p${l.page} y${l.y}: ${l.text}`));
+
+    setProgress(85);
+    const result = parseArada(textLines);
+    parsedBuildings = result.buildings;
+    pdfDate = result.date;
+    setProgress(95);
+
+    const total = Object.values(parsedBuildings).reduce((s, b) => s + b.length, 0);
+    if (total === 0) {
+      debug('\n=== All lines (for diagnosis) ===');
+      textLines.forEach((l, i) => debug(`[${i}] p${l.page} y${l.y}: ${l.text}`));
+      throw new Error('No office rows detected. Check the debug log below.');
+    }
+
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statSE').textContent = (parsedBuildings['Shoreditch Exchange']||[]).length;
+    document.getElementById('statLS').textContent = (parsedBuildings['Laundry Studios']||[]).length;
+    document.getElementById('statDate').textContent = pdfDate || '—';
+    document.getElementById('summaryRow').style.display = 'flex';
+
+    buildPreview();
+    document.getElementById('runBtn').disabled = false;
+    setProgress(100);
+    setStatus('✓ Parsed '+total+' suites across '+Object.keys(parsedBuildings).length+' buildings.','success');
+  } catch(e) {
+    setStatus('Error: '+e.message,'error');
+    console.error(e);
+  }
+  setTimeout(() => {
+    document.getElementById('progressWrap').style.display = 'none';
+    document.getElementById('progressBar').style.width = '0%';
+  }, 700);
+}
+
+// ── Arada parser ───────────────────────────────────────────────────────────────
+//
+// The PDF is a rendered HTML page (about:blank). pdf.js gives us text items
+// at arbitrary x positions that vary by render. So we parse by TEXT CONTENT
+// rather than x position.
+//
+// Approach:
+// 1. Find "As at" date
+// 2. Detect building section changes via header lines
+// 3. Within a private-offices section, each data row starts with a floor token
+//    followed on the same or adjacent line by a suite ref, then numeric fields.
+//    We collect tokens and classify them.
+//
+// Token classification for a data row (all on 1–2 lines):
+//   floor:    Ground / Lower Ground / 1st / 2nd / 3rd / 5th / 6th / GR (ground)
+//   suite:    e.g. G-04, LG-07, 1-103, 2-143, GR102, 3-101
+//   available: Now | From <date> [(available for early release)]
+//   desks:    small integer 1–200
+//   sqft:     larger integer 38–9999
+//   mtg:      small integer 1–9 (meeting rooms) — only present if PDF shows it
+//   deskPerMo: £NNN
+//   totalMo:  £N,NNN
+
+function parseArada(textLines) {
+  const buildings = {};
+  let currentBuilding = null;
+  let inPrivateOffices = false;
+  let date = '';
+
+  // We'll accumulate tokens across continuation lines for multi-line rows
+  let pendingRow = null;  // { floor, suite, tokens: [] }
+
+  const flushPending = () => {
+    if (!pendingRow || !currentBuilding) { pendingRow = null; return; }
+    const row = buildRow(pendingRow);
+    if (row) buildings[currentBuilding].push(row);
+    pendingRow = null;
+  };
+
+  for (let i = 0; i < textLines.length; i++) {
+    const { text, items } = textLines[i];
+    const lo = text.toLowerCase();
+
+    // ── Date
+    if (!date) {
+      const dm = text.match(/as\s+at\s+(.+)/i);
+      if (dm) date = dm[1].trim();
+    }
+
+    // ── Building section detection (must say "private offices" on same line or next)
+    if (/shoreditch\s+exchange/i.test(text) && /private\s+offices/i.test(text)) {
+      flushPending();
+      currentBuilding = 'Shoreditch Exchange';
+      inPrivateOffices = true;
+      if (!buildings[currentBuilding]) buildings[currentBuilding] = [];
+      continue;
+    }
+    if (/laundry\s+studios?/i.test(text) && /private\s+offices/i.test(text)) {
+      flushPending();
+      currentBuilding = 'Laundry Studios';
+      inPrivateOffices = true;
+      if (!buildings[currentBuilding]) buildings[currentBuilding] = [];
+      continue;
+    }
+    // End of private offices section
+    if (/coworking/i.test(text) && currentBuilding) {
+      flushPending();
+      inPrivateOffices = false;
+      continue;
+    }
+
+    if (!currentBuilding || !inPrivateOffices) continue;
+
+    // ── Skip header / noise lines
+    if (/^floor\b/i.test(text) && /suite/i.test(text)) continue;
+    if (/£\/desk/i.test(text) && !/£\d/.test(text)) continue;
+    if (/^(sq\s*ft|mtg|desks?)\b/i.test(text)) continue;
+    if (/hot\s*desk|dedicated\s*desk|unlimited.*membership|flexible.*membership/i.test(text)) continue;
+    if (/sam\s+mardon|kelsey\s+howard|arada\.com|head\s+of\s+workspace/i.test(text)) continue;
+    if (/about:blank|london\s+portfolio/i.test(text)) continue;
+
+    // ── Check if this line starts a new data row (begins with a floor token)
+    const floorMatch = text.match(/^(ground|lower\s+ground|basement|mezzanine|\d+(?:st|nd|rd|th)?(?:\s+floor)?|gr\d*|lg\b)/i);
+
+    if (floorMatch) {
+      // Flush any previous pending row first
+      flushPending();
+      // Start accumulating a new row
+      pendingRow = { floor: floorMatch[0].trim(), tokens: [text], rawLines: [text] };
+      continue;
+    }
+
+    // ── Continuation line for pending row (e.g. "available for early release", date overflow)
+    if (pendingRow) {
+      // If this line looks like it continues the availability text or has numeric data
+      if (/available\s+for\s+early\s+release/i.test(text) ||
+          /^from\s/i.test(text) ||
+          /^\d+\s+[a-z]+\s+\d{2,4}/i.test(text) ||
+          /^[a-z]+ \d{2,4}$/i.test(text) ||
+          /^£[\d,]+/.test(text) ||
+          /^\d{1,4}$/.test(text.trim())) {
+        pendingRow.tokens.push(text);
+        pendingRow.rawLines.push(text);
+        continue;
+      }
+      // Otherwise flush and move on
+      flushPending();
+    }
+  }
+  flushPending();
+
+  // Sort each building by desk count asc
+  for (const bld of Object.keys(buildings)) {
+    buildings[bld].sort((a, b) => (parseInt(a.desks)||0) - (parseInt(b.desks)||0));
+  }
+
+  return { buildings, date };
+}
+
+// ── Build a structured row from accumulated tokens ─────────────────────────────
+function buildRow(pending) {
+  const fullText = pending.rawLines.join(' ');
+
+  // ── Floor
+  const floor = parseFloor(pending.floor);
+
+  // ── Suite ref — e.g. G-04, LG-07, 1-103, GR102, 5-111
+  const suiteMatch = fullText.match(/\b([A-Z]{0,3}\d{1,4}(?:[-\.]\d{1,3})?)\b/i);
+  let suite = '';
+  if (suiteMatch) {
+    const s = suiteMatch[1];
+    if (!/^\d+(st|nd|rd|th)$/i.test(s)) suite = s;
+  }
+  if (!suite) return null;
+
+  // ── Available text — parse "From DD Mon YY[YY]" → YYYY-MM-DD
+  let available = '';
+  const MONTHS = {jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+  const fromMatch = fullText.match(/From\s+(\d{1,2})\s+([A-Za-z]+)\s+(\d{2,4})/i);
+  if (fromMatch) {
+    const day = String(parseInt(fromMatch[1])).padStart(2,'0');
+    const mon = MONTHS[fromMatch[2].toLowerCase().slice(0,3)];
+    const monStr = mon ? String(mon).padStart(2,'0') : '01';
+    let yr = parseInt(fromMatch[3]);
+    if (yr < 100) yr += 2000;
+    available = yr + '-' + monStr + '-' + day;
+  } else if (/\bNow\b/i.test(fullText)) available = 'Now';
+
+  // ── Prices: PDF has £/desk/mo then total/mo — total is always larger
+  const priceMatches = [...fullText.matchAll(/£([\d,]+)/g)]
+    .map(m => parseInt(m[1].replace(/,/g,''), 10));
+  const price = priceMatches.length ? Math.max(...priceMatches) : '';
+
+  // ── Extract desks, sqft, mtg rooms by matching the numeric data block directly.
+  // After the available text, the PDF columns are always: DESKS  SQ FT  MTG(or —)  £/desk  £total
+  // We find this block by locating the integers that sit BEFORE the first £ price.
+  // Strategy: remove the suite ref and all price tokens, find all remaining integers
+  // in the substring that comes AFTER the available token, in order.
+
+  // Build a version of fullText with suite digits and prices removed
+  let rem = fullText;
+  // Remove the suite ref entirely (e.g. "1-103", "G-04", "LG-07", "GR102")
+  rem = rem.replace(new RegExp('\\b' + suite.replace(/[-\.]/g, '[-.]') + '\\b', 'i'), ' ');
+  // Remove all price tokens
+  rem = rem.replace(/£[\d,]+/g, ' ');
+  // Remove "Now"
+  rem = rem.replace(/\bNow\b/i, ' ');
+  // Remove "From DD Mon YYYY [(available for early release)]"
+  rem = rem.replace(/From\s+\d{1,2}\s+\w+\s+\d{2,4}(?:\s*\(available\s+for\s+early\s+release\))?/i, ' ');
+  // Remove any remaining month names and 4-digit years
+  rem = rem.replace(/\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\b/gi, ' ');
+  rem = rem.replace(/\b20\d{2}\b/g, ' ');
+  // Remove floor token at start
+  rem = rem.replace(/^\s*(ground|lower\s+ground|basement|mezzanine|\d+(?:st|nd|rd|th)?(?:\s+floor)?|gr\d*|lg\b)\s*/i, ' ');
+  // Replace dashes (placeholder for blank mtg rooms) with space
+  rem = rem.replace(/[—–\/\-]+/g, ' ');
+
+  // Remaining integers in order are: desks, sqft, [mtg rooms]
+  // Match comma-formatted numbers (e.g. 1,238) as single integers before plain integers,
+  // so sqft values like 1,068 or 2,344 aren't split across two positional slots.
+  const positional = [...rem.matchAll(/\b(\d{1,3}(?:,\d{3})+|\d+)\b/g)]
+    .map(m => parseInt(m[1].replace(/,/g, ''), 10))
+    .filter(n => n > 0);
+
+  const desks = positional[0] || '';
+  const sqft  = positional[1] || '';
+  const mtg   = positional[2] || ''; // only present when PDF shows a meeting room count, not a dash
+
+  if (!desks && !sqft) return null;
+
+  // ── What's included (Master Converter pattern)
+  const unitRef  = 'Office ' + suite;
+  const included = '* ' + unitRef;
+
+  // ── Available from: "Now" → blank per Master Converter rules
+  const availFrom = /^now$/i.test(available) ? '' : available;
+
+  return {
+    floor,
+    unit:         unitRef,
+    sqft:         sqft || '',
+    desks:        desks || '',
+    price:        price || '',
+    min_term:     '',
+    max_term:     '',
+    available:    availFrom,
+    included,
+    not_included: '',
+    position:     '',
+    extra_rooms:  mtg || '',
+  };
+}
+
+function parseFloor(raw) {
+  const s = String(raw||'').trim();
+  if (/^(g|ground|gr\d*)$/i.test(s))   return 'Ground';
+  if (/lower\s*ground|^lg/i.test(s))   return 'Lower Ground';
+  if (/^b$|^basement$/i.test(s))       return 'Basement';
+  if (/^m$|^mezzanine$/i.test(s))      return 'Mezzanine';
+  const fm = s.match(/^(\d+)(?:st|nd|rd|th)?/i);
+  if (fm) { const n=parseInt(fm[1]); return n+(['','st','nd','rd'][n]||'th'); }
+  return s;
+}
+
+// ── Preview ────────────────────────────────────────────────────────────────────
+const PREVIEW_KEYS    = ['floor','unit','sqft','desks','price','available','extra_rooms'];
+const PREVIEW_HEADERS = ['Floor','Office/Unit Number','Sq Ft','Desks','Price/mo','Available from','Addl Rooms'];
+
+function buildPreview() {
+  const bldNames = Object.keys(parsedBuildings);
+  if (!bldNames.length) return;
+  if (!activePreviewBuilding || !parsedBuildings[activePreviewBuilding]) {
+    activePreviewBuilding = bldNames[0];
+  }
+  document.getElementById('buildingTabs').innerHTML = bldNames.map(b =>
+    `<button class="building-tab ${b===activePreviewBuilding?'active':''}"
+      onclick="switchPreview(${JSON.stringify(b)})">${b}</button>`
+  ).join('');
+  renderPreview();
+  document.getElementById('previewPanel').style.display = 'block';
+}
+
+function switchPreview(name) { activePreviewBuilding = name; buildPreview(); }
+
+function renderPreview() {
+  const rows = parsedBuildings[activePreviewBuilding] || [];
+  document.getElementById('previewCount').textContent = rows.length;
+  document.getElementById('previewHead').innerHTML =
+    PREVIEW_HEADERS.map(h => `<th>${h}</th>`).join('');
+  const SHOW = 12;
+  let html = rows.slice(0, SHOW).map(row =>
+    '<tr>' + PREVIEW_KEYS.map(k => {
+      const v = String(row[k]||'');
+      if (k==='available') {
+        const cls = !v ? 'tag tag-now' : 'tag tag-soon';
+        const label = v || 'Now';
+        const disp = label.length > 30 ? label.slice(0,28)+'…' : label;
+        return `<td><span class="${cls}">${disp}</span></td>`;
+      }
+      return `<td>${v||'<span class="muted">—</span>'}</td>`;
+    }).join('') + '</tr>'
+  ).join('');
+  if (rows.length > SHOW)
+    html += `<tr><td colspan="${PREVIEW_KEYS.length}" style="color:var(--text-muted);font-size:0.72rem;padding:6px 8px">…and ${rows.length-SHOW} more rows</td></tr>`;
+  document.getElementById('previewBody').innerHTML = html;
+}
+
+// ── CSV export ─────────────────────────────────────────────────────────────────
+function toCSVString(rows) {
+  const all = [OUTPUT_HEADERS, ...rows.map(r =>
+    OUTPUT_KEYS.map(k => {
+      const v = String(r[k]??'');
+      return (v.includes(',')||v.includes('"')||v.includes('\n'))
+        ? `"${v.replace(/"/g,'""')}"` : v;
+    })
+  )];
+  return all.map(r => r.join(',')).join('\r\n');
+}
+
+function safeName(s) { return s.replace(/[:\\\/\?\*\[\]<>|"]/g,'').trim().slice(0,80); }
+
+function dl(blob, name) {
+  const a = Object.assign(document.createElement('a'),
+    { href: URL.createObjectURL(blob), download: name });
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(a.href);
+}
+
+async function doDownload() {
+  document.getElementById('runBtn').disabled = true;
+  setStatus('Generating…','loading');
+  try {
+    const bldNames = Object.keys(parsedBuildings);
+    const dateStr  = pdfDate
+      ? pdfDate.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_\-]/g,'')
+      : 'export';
+
+    if (bldNames.length === 1) {
+      const bld = bldNames[0];
+      dl(new Blob([toCSVString(parsedBuildings[bld])],{type:'text/csv'}),
+        `Arada — ${safeName(bld)} — ${dateStr}.csv`);
+      setStatus(`✓ Downloaded 1 CSV — ${parsedBuildings[bld].length} rows.`,'success');
+    } else {
+      const zip = new JSZip();
+      bldNames.forEach(bld => {
+        zip.file(`Arada — ${safeName(bld)} — ${dateStr}.csv`, toCSVString(parsedBuildings[bld]));
+      });
+      const blob = await zip.generateAsync({type:'blob'});
+      dl(blob, `Arada — Availability — ${dateStr}.zip`);
+      const total = Object.values(parsedBuildings).reduce((s,b)=>s+b.length,0);
+      setStatus(`✓ Downloaded ${bldNames.length} CSVs as .zip — ${total} total rows.`,'success');
+    }
+  } catch(e) {
+    setStatus('Error: '+e.message,'error');
+    console.error(e);
+  }
+  document.getElementById('runBtn').disabled = false;
+}
+</script>
+</body>
+</html>
