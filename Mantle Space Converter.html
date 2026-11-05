@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mantle Space Converter</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --p:#e70f67;--pd:#b50a50;--pl:rgba(231,15,103,.08);--pf:rgba(231,15,103,.04);
+  --pb:rgba(231,15,103,.22);--pg:rgba(231,15,103,.3);
+  --bg-a:#fff0f6;--bg-b:#fdf0f8;
+  --dk:#1a0010;--mu:rgba(90,0,48,.52);
+  --grn:#00a86b;--grn-bg:#f0fdf7;
+  --amb:#f59e0b;--amb-bg:#fffbeb;
+  --blue:#2563eb;--blue-bg:#eff6ff;
+  --card:rgba(255,255,255,.82);
+  --pan:rgba(231,15,103,.025);--panb:rgba(231,15,103,.11);
+  --sh:0 8px 40px rgba(231,15,103,.09),0 2px 12px rgba(90,0,48,.05);
+}
+
+body{
+  font-family:'Inter',system-ui,sans-serif;min-height:100vh;
+  background:linear-gradient(135deg,var(--bg-a) 0%,var(--bg-b) 100%);
+  display:flex;flex-direction:column;align-items:center;padding:48px 16px 80px;
+}
+
+/* ── Header ── */
+.hdr{text-align:center;margin-bottom:36px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:var(--p);color:#fff;
+  font-size:.67rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  padding:5px 14px;border-radius:999px;margin-bottom:16px}
+.bdot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.65)}
+h1{font-size:2rem;font-weight:800;color:var(--dk);letter-spacing:-.04em;margin-bottom:8px}
+h1 em{font-style:normal;color:var(--p)}
+p.sub{color:var(--mu);font-size:.875rem;max-width:480px;margin:0 auto;line-height:1.6}
+
+/* ── Card ── */
+.card{background:var(--card);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.95);
+  border-radius:22px;padding:32px;width:100%;max-width:700px;box-shadow:var(--sh)}
+
+/* ── Drop zone ── */
+.drop-zone{
+  border:2px dashed var(--pb);border-radius:16px;padding:42px 24px;
+  text-align:center;cursor:pointer;transition:all .18s;margin-bottom:16px;
+  background:var(--pf);position:relative;
+}
+.drop-zone:hover,.drop-zone.dragging{border-color:var(--p);background:var(--pl)}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.drop-icon{width:54px;height:54px;background:#fff;border:1.5px solid var(--pb);border-radius:14px;
+  display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto 14px}
+.drop-title{font-size:.95rem;font-weight:700;color:var(--dk);margin-bottom:5px}
+.drop-sub{font-size:.8rem;color:var(--mu)}
+.drop-sub em{font-style:normal;color:var(--p);font-weight:600}
+
+/* ── File chips ── */
+.files-list{display:flex;flex-direction:column;gap:6px;margin-bottom:4px}
+.file-chip{
+  display:flex;align-items:center;gap:10px;
+  background:#fff;border:1px solid var(--panb);border-radius:10px;
+  padding:10px 14px;font-size:.8rem;
+}
+.fc-icon{font-size:1.1rem;flex-shrink:0}
+.fc-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-weight:600;color:var(--dk)}
+.fc-size{color:var(--mu);font-size:.72rem;flex-shrink:0}
+.fc-remove{cursor:pointer;color:var(--mu);font-size:1.1rem;line-height:1;
+  flex-shrink:0;background:none;border:none;padding:0 0 0 4px;font-family:inherit}
+.fc-remove:hover{color:var(--p)}
+
+/* ── Venue override ── */
+.field-row{margin-top:14px}
+.field-row label{display:block;font-size:.65rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.07em;color:var(--mu);margin-bottom:6px}
+.field-row input{
+  width:100%;padding:9px 13px;font-size:.82rem;
+  border:1.5px solid var(--pb);border-radius:10px;
+  background:#fff;color:var(--dk);font-family:inherit;outline:none;
+  transition:border-color .15s;
+}
+.field-row input:focus{border-color:var(--p)}
+.field-row .hint{font-size:.7rem;color:var(--mu);margin-top:5px}
+
+/* ── Convert button ── */
+.convert-btn{
+  margin-top:20px;width:100%;background:var(--p);color:#fff;
+  border:none;border-radius:11px;padding:13px;
+  font-size:.9rem;font-weight:700;font-family:inherit;
+  cursor:pointer;transition:background .15s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  letter-spacing:-.01em;
+}
+.convert-btn:hover{background:var(--pd)}
+.convert-btn:disabled{background:var(--pb);color:rgba(90,0,48,.35);cursor:not-allowed}
+
+/* ── Spinner ── */
+.spinner{
+  width:16px;height:16px;border:2.5px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;
+  animation:spin .7s linear infinite;display:none;flex-shrink:0;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Progress ── */
+.prog-wrap{margin-top:12px;background:var(--pb);border-radius:999px;height:4px;overflow:hidden;display:none}
+.prog-bar{height:100%;background:var(--p);border-radius:999px;width:0%;transition:width .3s}
+.prog-label{font-size:.72rem;color:var(--mu);margin-top:6px;display:none;text-align:center}
+
+/* ── Error ── */
+.error-box{
+  margin-top:12px;background:#fff5f9;border:1px solid var(--pb);
+  border-radius:10px;padding:11px 15px;font-size:.8rem;color:var(--p);display:none;
+}
+
+/* ── Results ── */
+.results{margin-top:28px;display:none}
+
+.results-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:16px;flex-wrap:wrap;gap:10px;
+}
+.results-hdr h2{font-size:1rem;font-weight:700;color:var(--dk);letter-spacing:-.02em}
+.venue-pill{
+  display:inline-block;background:var(--pl);color:var(--p);
+  font-size:.67rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 10px;border-radius:999px;margin-left:8px;
+}
+
+.dl-btn{
+  display:inline-flex;align-items:center;gap:6px;background:var(--p);color:#fff;
+  border:none;border-radius:9px;padding:9px 18px;
+  font-size:.8rem;font-weight:700;font-family:inherit;
+  cursor:pointer;transition:background .15s;letter-spacing:-.01em;flex-shrink:0;
+}
+.dl-btn:hover{background:var(--pd)}
+
+/* ── Stats ── */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat-card{background:#fff;border:1px solid var(--panb);border-radius:12px;padding:14px 12px;text-align:center}
+.stat-n{font-size:1.6rem;font-weight:800;letter-spacing:-.04em;line-height:1}
+.stat-n.total{color:var(--dk)}
+.stat-n.avail{color:var(--grn)}
+.stat-n.soon{color:var(--p)}
+.stat-l{font-size:.67rem;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-top:4px}
+
+/* ── Table ── */
+.tbl-scroll{overflow-x:auto;border-radius:12px;border:1px solid var(--panb)}
+table{width:100%;border-collapse:collapse;font-size:.78rem;min-width:540px}
+thead th{
+  background:var(--pan);color:var(--mu);
+  font-size:.63rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  padding:10px 13px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--panb);
+}
+tbody tr{border-bottom:1px solid rgba(231,15,103,.06)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover td{background:var(--pf)}
+tbody td{padding:9px 13px;color:var(--dk);vertical-align:middle}
+.unit-cell{font-weight:700;font-size:.75rem;letter-spacing:.01em;color:var(--dk)}
+.price-cell{font-weight:700;color:var(--pd)}
+.poa-note{font-size:.65rem;color:var(--mu);display:block;font-weight:400;font-style:italic}
+
+.badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:.67rem;font-weight:700;white-space:nowrap}
+.badge-now{background:var(--grn-bg);color:var(--grn)}
+.badge-soon{background:var(--amb-bg);color:var(--amb)}
+.badge-date{background:var(--blue-bg);color:var(--blue)}
+
+/* ── POA note ── */
+.poa-info{
+  margin-top:12px;background:var(--pf);border:1px solid var(--panb);
+  border-radius:10px;padding:11px 15px;font-size:.75rem;color:var(--mu);line-height:1.6;
+}
+.poa-info strong{color:var(--p);font-weight:700}
+
+/* ── Preview panel ── */
+.preview-panel{display:none;background:var(--pan);border:1px solid var(--panb);border-radius:14px;padding:16px;margin-bottom:16px}
+.preview-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px}
+.preview-title{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--p)}
+.view-toggle{display:flex;gap:3px;background:var(--pl);border-radius:8px;padding:3px;border:1px solid var(--pb);flex-shrink:0}
+.view-toggle button{font-size:.65rem;font-weight:700;padding:4px 10px;border:none;border-radius:6px;cursor:pointer;font-family:inherit;letter-spacing:.04em;text-transform:uppercase;background:transparent;color:var(--mu);transition:all .15s}
+.view-toggle button.active{background:var(--p);color:#fff;box-shadow:0 1px 6px var(--pg)}
+.preview-scroll{overflow-x:auto}
+.preview-table{min-width:620px;width:100%;border-collapse:collapse}
+.preview-table th{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--mu);white-space:nowrap;padding:5px 9px;text-align:left;border-bottom:1px solid var(--panb)}
+.preview-table td{font-size:.74rem;color:var(--dk);padding:5px 9px;border-bottom:1px solid rgba(231,15,103,.05);white-space:nowrap}
+.preview-table tr:last-child td{border-bottom:none}
+.preview-table tr:hover td{background:var(--pf)}
+.tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.65rem;font-weight:600}
+.tag-ok{background:var(--grn-bg);color:var(--grn)}
+.tag-date{background:var(--blue-bg);color:var(--blue)}
+.tag-poa{background:var(--pl);color:var(--p)}
+
+/* ── Divider ── */
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--pb),transparent);margin:24px 0}
+
+/* ── Rules ── */
+details summary{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--p);list-style:none;display:flex;align-items:center;cursor:pointer;user-select:none}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:'▸';margin-left:6px;font-size:.75rem;transition:transform .2s}
+details[open] summary::after{transform:rotate(90deg)}
+.rules-grid{display:flex;flex-direction:column;gap:7px;margin-top:12px}
+.rule{display:flex;align-items:flex-start;gap:9px;font-size:.77rem;color:var(--dk);opacity:.8;line-height:1.5}
+.rule-dot{width:17px;height:17px;border-radius:50%;background:var(--p);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:800;color:#fff;margin-top:1px}
+
+@media(max-width:600px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  h1{font-size:1.5rem}
+  .card{padding:22px 18px}
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="badge"><span class="bdot"></span>Availability<span class="bdot"></span></div>
+  <h1>Mantle Space <em>Converter</em></h1>
+  <p class="sub">Drop in a Space Information PDF and download a CSV ready for upload — meeting rooms, Home-Flexi and POA pricing handled automatically.</p>
+</div>
+
+<div class="card">
+
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" accept=".pdf" multiple />
+    <div class="drop-icon">📄</div>
+    <div class="drop-title">Drop Mantle Space PDFs here</div>
+    <div class="drop-sub">or <em>click to browse</em> — multiple files accepted</div>
+  </div>
+
+  <div class="files-list" id="filesList"></div>
+
+  <div class="field-row" id="venueWrap" style="display:none">
+    <label>Venue name override</label>
+    <input type="text" id="venueOverride" placeholder="e.g. The Officers' Mess" />
+    <div class="hint">Auto-detected from the PDF. Only fill in if the result looks wrong.</div>
+  </div>
+
+  <button class="convert-btn" id="convertBtn" disabled>
+    <div class="spinner" id="spinner"></div>
+    <span id="btnLabel">Convert to CSV</span>
+  </button>
+
+  <div class="prog-wrap" id="progWrap"><div class="prog-bar" id="progBar"></div></div>
+  <div class="prog-label" id="progLabel"></div>
+  <div class="error-box" id="errorBox"></div>
+
+  <div class="results" id="results"></div>
+
+  <div class="divider"></div>
+
+  <details>
+    <summary>Output format rules</summary>
+    <div class="rules-grid">
+      <div class="rule"><div class="rule-dot">✓</div>Only offices with a real price are included — LET, STC, Store, Meeting Room, Home-Flexi, and By-the-Hour entries are all skipped automatically.</div>
+      <div class="rule"><div class="rule-dot">✓</div>Units marked "Under Offer" are skipped automatically.</div>
+      <div class="rule"><div class="rule-dot">✓</div>Units with no valid desk number (blank, N/A, TBC, 0) are skipped automatically.</div>
+      <div class="rule"><div class="rule-dot">✓</div>POA pricing: if a unit says POA, the configured "from" rate for that venue is used (e.g. Kings Court → £360, Officers' Mess → £400). Marked in the preview so you can review before downloading.</div>
+      <div class="rule"><div class="rule-dot">✓</div>Output columns: Floor · Office/Unit Number · Square footage · Desk capacity · Price per month · Floor · Min term (1) · Max term (12) · Available from · What's included · What's not included · Office position · Number of additional rooms</div>
+      <div class="rule"><div class="rule-dot">✓</div>Available from: "Available Soon" and bare "Available" → Now (blank in CSV). Any specific date is output as YYYY-MM-DD (month-only dates, e.g. "August 2026", become 2026-08-01).</div>
+      <div class="rule"><div class="rule-dot">✓</div>What's included is populated per-building from the configured amenity list — Thremhall Park, Officers' Mess, Lambourn, Bradfield, 9 Hills Road, Kings Court, and Elizabeth House each have their own list.</div>
+      <div class="rule"><div class="rule-dot">✓</div>What's not included: VAT (all venues).</div>
+      <div class="rule"><div class="rule-dot">✓</div>Excluded unit types: Meeting Room, Home-Flexi, Dedicated Desk, Store, Coworking, By the Hour, Billiard Room, Card Room, Ante Room, The Quarters, Breakout Room, Centre Manager Office.</div>
+      <div class="rule"><div class="rule-dot">✓</div>Floor labels: Ground, Lower Ground, 1st, 2nd, 3rd — detected from section headers in the PDF.</div>
+      <div class="rule"><div class="rule-dot">✓</div>Venue auto-detected from "Space Information / [Venue Name]" on the cover page. Override available if needed.</div>
+    </div>
+  </details>
+
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+const POA_PRICES={
+  'thremhall':300,'the priory':300,
+  'elizabeth house':425,
+  'kings court':360,
+  'bradfield':600,
+  '9 hills':625,
+  'officers':400,
+  'lambourn':300,
+  'regent street':675,
+  'one station':275,'station approach':275
+};
+const WHAT_INC_BY_VENUE={
+  'thremhall':'Offices available in similar sizes, prices may vary | Rent, business rates, service charge | Utility bills & building insurance | Daily cleaning | Fully furnished office | Individual air conditioning | CCTV & access control system | Unlimited access to fibre broadband & Wi-Fi | Breakout area & kitchen facilities | Networking & Firewall protection | Telephone handset with individual DDI | Voicemail, 24-hr remote access | Staffed reception | Mail handling | Printing facilities',
+  'the priory':'Offices available in similar sizes, prices may vary | Rent, business rates, service charge | Utility bills & building insurance | Daily cleaning | Fully furnished office | Individual air conditioning | CCTV & access control system | Unlimited access to fibre broadband & Wi-Fi | Breakout area & kitchen facilities | Networking & Firewall protection | Telephone handset with individual DDI | Voicemail, 24-hr remote access | Staffed reception | Mail handling | Printing facilities',
+  'officers':'Rent, business rates and service charge | Utility bills and building insurance | Daily cleaning | Fully furnished office | CCTV and access control system | Free Wi-Fi | Large Heart reception, event space, on site coffee shop | Kitchen facilities, stocked with tea and coffee | Networking and Firewall protection | Post-delivery and collection | Printing',
+  'lambourn':'Rent, business rates and service charge, utility bills and building insurance | Daily cleaning | Fully furnished office | Staffed Reception | Individual air conditioning | CCTV and access control system | Unlimited uploads/downloads on our 100Mbps fibre broadband (shared) | Breakout area and kitchen | Telephone handset with individual DDI | 24 hour remote access | Printing',
+  'bradfield':'Rent, business rates and service charge, utility bills and building insurance | Reception service | Post-delivery and collection service | CCTV and 24 hour access control system | Daily cleaning and maintenance | Fully furnished office | Unlimited meeting room usage | Unlimited access to broadband, including firewall protection | Breakout rooms and kitchen facilities | Cycle Racks and Showers',
+  '9 hills':'Rent, business rates and service charge, utility bills and building insurance | Daily cleaning | Fully furnished office | Staffed Reception | Individual air conditioning | CCTV and access control system | Unlimited uploads/downloads on our 100Mbps fibre broadband (shared) | Breakout area and kitchen | Telephone handset with individual DDI | 24 hour remote access | Printing',
+  'nine hills':'Rent, business rates and service charge, utility bills and building insurance | Daily cleaning | Fully furnished office | Staffed Reception | Individual air conditioning | CCTV and access control system | Unlimited uploads/downloads on our 100Mbps fibre broadband (shared) | Breakout area and kitchen | Telephone handset with individual DDI | 24 hour remote access | Printing',
+  'kings court':'Rent, business rates and service charge, utility bills and building insurance | Daily cleaning | Fully furnished office | Staffed Reception | Individual air conditioning | CCTV and access control system | Unlimited uploads/downloads on our 100Mbps fibre broadband (shared) | Breakout area and kitchen | Telephone handset with individual DDI | 24 hour remote access | Printing',
+  'elizabeth house':'Rent, business rates and service charge | Utility bills and building insurance | Daily cleaning | Fully furnished office | Individual air conditioning | CCTV and access control system | Unlimited access to fibre broadband & Free Wi-Fi | Breakout area and kitchen facilities; stocked with tea and coffee | Networking and Firewall protection | Telephone handset with individual DDI | 24/7 Access'
+};
+const WHAT_INC_DEFAULT='Rent, business rates and service charge | Utility bills and building insurance | Daily cleaning | Fully furnished office | CCTV and access control system | Broadband and Wi-Fi | Kitchen facilities | 24-hour access';
+function getWhatInc(venue){
+  if(!venue)return WHAT_INC_DEFAULT;
+  const v=venue.toLowerCase();
+  for(const[k,val]of Object.entries(WHAT_INC_BY_VENUE)){if(v.includes(k))return val;}
+  return WHAT_INC_DEFAULT;
+}
+const WHAT_NOT='VAT';
+
+const SKIP_PRICE=['meeting room','home-flexi','home flexi','by the hour','dedicated desk','centre manager','store','coworking','virtual','bassingboui','grange','morley'];
+const SKIP_NAME=['breakout room','billiard room','card room','ante room','the quarters','the heart','the stores','dining room','comms room','coffee shop','reception','home-flexi','home flexi','mtg','meeting'];
+const UNDER_OFFER_RE=/under[\s-]*offer/i;
+
+function shouldSkip(name,price){
+  const n=name.toLowerCase(),p=price.toLowerCase();
+  return SKIP_PRICE.some(k=>p.includes(k))||SKIP_NAME.some(k=>n.includes(k));
+}
+function getPOA(venue){
+  if(!venue)return 400;
+  const v=venue.toLowerCase();
+  for(const[k,val]of Object.entries(POA_PRICES))if(v.includes(k))return val;
+  return 400;
+}
+function detectVenue(text){
+  const m=text.match(/space information[\r\n]+([^\r\n]+)/i);
+  if(m)return m[1].trim();
+  return null;
+}
+const FLOOR_RE=/^(lower ground|ground|first|second|third|basement)\s*(floor)?(\s*\(.*?\))?$/i;
+function parseFloor(h){
+  h=h.toLowerCase();
+  if(h.includes('lower ground'))return'Lower Ground';
+  if(h.includes('ground'))return'Ground';
+  if(h.includes('first'))return'1';
+  if(h.includes('second'))return'2';
+  if(h.includes('third'))return'3';
+  if(h.includes('fourth'))return'4';
+  if(h.includes('basement'))return'Basement';
+  return'Ground';
+}
+const MONTHS={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+
+function pad2(n){return String(n).padStart(2,'0');}
+function fullYear(y){y=String(y).trim();return y.length===2?'20'+y:y;}
+
+// Always returns 'Now', a YYYY-MM-DD date, or null (skip)
+function parseAvail(raw){
+  if(!raw)return null;
+  // Strip leading +vat / vat noise that bleeds from price column
+  raw=raw.trim().replace(/^[+\s]*vat\s*/i,'').replace(/^£?poa\s*/i,'').trim();
+  const a=raw.toLowerCase();
+  if(!a||a==='let'||a==='stc'||a==='store')return null;
+  if(UNDER_OFFER_RE.test(a))return null;
+  if(a==='available'||a==='available now'||a==='available soon')return'Now';
+
+  let m;
+  // Already ISO: 2026-08-15
+  m=raw.match(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/);
+  if(m)return`${m[1]}-${pad2(m[2])}-${pad2(m[3])}`;
+
+  // UK numeric: 15/08/2026, 15.08.26, 15-08-2026
+  m=raw.match(/\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})\b/);
+  if(m)return`${fullYear(m[3])}-${pad2(m[2])}-${pad2(m[1])}`;
+
+  // Day + month name + year: 15 August 2026, 1st Aug 26
+  m=raw.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?,?\s*(\d{2,4})\b/i);
+  if(m)return`${fullYear(m[3])}-${MONTHS[m[2].toLowerCase().slice(0,3)]}-${pad2(m[1])}`;
+
+  // Month name + year: August 2026 → 2026-08-01
+  m=raw.match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*(\d{2,4})/i);
+  if(m)return`${fullYear(m[2])}-${MONTHS[m[1].toLowerCase().slice(0,3)]}-01`;
+
+  // Numeric month/year: 08/2026 → 2026-08-01
+  m=raw.match(/\b(\d{1,2})[\/\-](\d{4})\b/);
+  if(m)return`${m[2]}-${pad2(m[1])}-01`;
+
+  if(a.startsWith('available'))return'Now';
+  return null;
+}
+function parsePrice(raw,poaBase){
+  if(!raw)return null;
+  const p=raw.toLowerCase().trim().replace(/\+vat.*/,'').trim();
+  if(!p||p==='let'||p==='stc'||p==='store')return null;
+  if(p==='poa'||p==='£poa')return{price:poaBase,wasPOA:true};
+  const m=raw.match(/£\s*([\d,]+)/);
+  if(m)return{price:parseInt(m[1].replace(/,/g,'')),wasPOA:false};
+  return null;
+}
+function fmtBytes(b){
+  if(b<1024)return b+' B';
+  if(b<1048576)return(b/1024).toFixed(0)+' KB';
+  return(b/1048576).toFixed(1)+' MB';
+}
+
+async function extractPages(file,onProg){
+  const buf=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+  const pages=[];
+  for(let p=1;p<=pdf.numPages;p++){
+    if(onProg)onProg(p,pdf.numPages);
+    const page=await pdf.getPage(p);
+    const content=await page.getTextContent();
+    const lineMap={};
+    content.items.forEach(item=>{
+      const y=Math.round(item.transform[5]);
+      if(!lineMap[y])lineMap[y]=[];
+      lineMap[y].push({x:item.transform[4],text:item.str.trim()});
+    });
+    const sortedYs=Object.keys(lineMap).map(Number).sort((a,b)=>b-a);
+    pages.push(sortedYs.map(y=>({
+      y,cols:lineMap[y].sort((a,b)=>a.x-b.x).map(i=>i.text).filter(Boolean)
+    })));
+  }
+  return pages;
+}
+
+function parseOffices(pages,venue){
+  const poaBase=getPOA(venue);
+  const offices=[];
+  let floor='Ground';
+
+  // Detect extended layout (One Station Approach): has 'External' or 'Internal' in col[1]
+  let extendedLayout=false;
+  for(const page of pages){
+    for(const{cols}of page){
+      if(cols.length>=7&&/^(external|internal)$/i.test(cols[1])){
+        extendedLayout=true;break;
+      }
+    }
+    if(extendedLayout)break;
+  }
+
+  // Flatten all pages into a single stream of col-arrays, merging by Y proximity
+  const allLines=[];
+  for(const page of pages){
+    for(const{cols}of page){
+      if(cols.length)allLines.push(cols);
+    }
+  }
+
+  for(let i=0;i<allLines.length;i++){
+    const cols=allLines[i];
+    const line=cols.join(' ');
+
+    // Floor detection
+    if(/(ground|first|second|third|lower ground|basement)/i.test(line)&&/floor/i.test(line)&&cols.length<=5){
+      floor=parseFloor(line);continue;
+    }
+    // Also catch split 'GROUND' / 'FLOOR' across two cols
+    if(cols.length<=2&&/^(ground|first|second|third|basement)$/i.test(cols[0])){
+      floor=parseFloor(cols[0]);continue;
+    }
+
+    // Skip anything marked Under Offer
+    if(UNDER_OFFER_RE.test(line))continue;
+
+    // Skip header/footer rows
+    if(/^(office|size|number|price|availability|sq|the figures|what|space information|flexible|mantlespace|available|dedicated|home-flexi|meeting)/i.test(cols[0]))continue;
+
+    // Must start with alphanumeric unit name
+    if(!/^[A-Za-z0-9]/.test(cols[0]))continue;
+
+    if(extendedLayout){
+      // One Station Approach: name, window, sqft, sqm, desks, deskRate, pcm, [pa, status]
+      if(cols.length<6)continue;
+      const[name,window,sqftRaw,sqmRaw,desks,deskRate,pcm,...rest]=cols;
+      const sqft=parseInt(String(sqftRaw).replace(/,/g,''));
+      if(!sqft||sqft<40||sqft>60000)continue;
+      // Skip units with no valid desk number (blank, N/A, TBC, 0)
+      if(!/^\d+/.test(String(desks).trim())||parseInt(desks)<1)continue;
+      let finalPrice=0;
+      if(pcm&&/£/.test(pcm)){finalPrice=parseInt(pcm.replace(/[£,]/g,''))||0;}
+      else if(deskRate&&/£/.test(deskRate)){const rate=parseInt(deskRate.replace(/[£,]/g,''))||0;finalPrice=rate*(parseInt(desks)||1);}
+      if(!finalPrice)continue;
+      const availRaw=rest.join(' ').replace(/£[\d,]+/g,'').trim();
+      const avail=parseAvail(availRaw);
+      if(avail===null)continue;
+      if(shouldSkip(name,''))continue;
+      const position=/^external$/i.test(window)?'Window':/^internal$/i.test(window)?'Internal':'';
+      offices.push({floor,unit:name.trim(),sqft,sqm:parseFloat(sqmRaw)||0,desks:String(parseInt(desks)||''),price:finalPrice,wasPOA:false,availability:avail,position});
+
+    } else {
+      // Standard layout — unit names may be split: ["0","1","-","34","120","11","4","£POA","Available Now"]
+      // Reassemble: join cols until we find a large number (sqft >= 40)
+      let nameparts=[];
+      let ci=0;
+      while(ci<cols.length){
+        const n=parseInt(String(cols[ci]).replace(/,/g,''));
+        const nextN=parseFloat(cols[ci+1]);
+        // sqft is always larger than sqm — use that to distinguish from unit name digits
+        if(n>=50&&n<=60000&&!isNaN(nextN)&&nextN>0&&nextN<n)break;
+        nameparts.push(cols[ci]);
+        ci++;
+      }
+      if(ci>=cols.length)continue;
+      // Reassemble name — join parts, collapsing digits/dashes into unit ref
+      const name=nameparts.join('').replace(/\s+/g,'');
+      if(!name||!/^[A-Za-z0-9]/.test(name))continue;
+
+      const sqft=parseInt(String(cols[ci]).replace(/,/g,''));
+      if(!sqft||sqft<40||sqft>60000)continue;
+      const sqm=parseFloat(cols[ci+1])||0;
+      const desks=cols[ci+2]||'';
+      // Skip units with no valid desk number (blank, N/A, TBC, 0)
+      if(!/^\d+/.test(String(desks).trim())||parseInt(desks)<1)continue;
+      const priceRaw=cols[ci+3]||'';
+      const availRaw=cols.slice(ci+4).join(' ').trim();
+
+      if(shouldSkip(name,priceRaw+' '+availRaw))continue;
+
+      const pr=parsePrice(priceRaw,poaBase);
+      if(!pr)continue;
+
+      let avail=parseAvail(availRaw);
+      if(avail===null){
+        // Peek at following lines (only short ones that aren't a new unit row)
+        const nextLines=[allLines[i+1],allLines[i+2]].filter(l=>l&&l.length<=3);
+        const next=nextLines.map(l=>l.join(' ')).join(' ');
+        if(UNDER_OFFER_RE.test(next))continue;
+        if(/available/i.test(next))avail='Now';
+        else if(/let|stc/i.test(next))continue;
+        else avail='Now';
+      }
+
+      const deskNum=parseInt(String(desks).split('-')[0])||1;
+      const finalPrice=pr.wasPOA?pr.price*deskNum:pr.price;
+      const cleanDesks=String(parseInt(String(desks).split('-')[0])||'');
+      offices.push({floor,unit:name.trim(),sqft,sqm,desks:cleanDesks,price:finalPrice,wasPOA:pr.wasPOA,availability:avail,position:''});
+    }
+  }
+  return offices;
+}
+
+function toCSV(offices,venue){
+  const hdrs=['Floor','Office/Unit Number','Square footage','Desk capacity','Price per month','Min term (months)','Max term (months)','Available from',"What's included","What's not included",'Office position','Number of additional rooms'];
+  const esc=v=>{const s=String(v??'');return(s.includes(',')||s.includes('"')||s.includes('\n'))?`"${s.replace(/"/g,'""')}"`:`${s}`;};
+  const baseInc=getWhatInc(venue);
+  const rows=offices.map(o=>{
+    const amenities=baseInc.split('|').map(s=>s.trim()).filter(Boolean);
+    const inc=[`* Office ${o.unit}`,...amenities.map(a=>`* ${a}`)].join('\n');
+    return[o.floor,`Office ${o.unit}`,o.sqft,o.desks,o.price,'','',(o.availability==='Now'?'':o.availability),inc,'',o.position||'',''];
+  });
+  return[hdrs,...rows].map(r=>r.map(esc).join(',')).join('\r\n');
+}
+
+// ── UI state ──
+let files=[];
+function updateFiles(){
+  const list=document.getElementById('filesList');
+  const vw=document.getElementById('venueWrap');
+  const btn=document.getElementById('convertBtn');
+  list.innerHTML=files.map((f,i)=>`
+    <div class="file-chip">
+      <span class="fc-icon">📋</span>
+      <span class="fc-name">${f.name}</span>
+      <span class="fc-size">${fmtBytes(f.size)}</span>
+      <button class="fc-remove" data-i="${i}" title="Remove">×</button>
+    </div>`).join('');
+  list.querySelectorAll('.fc-remove').forEach(b=>{
+    b.onclick=()=>{files.splice(+b.dataset.i,1);updateFiles();};
+  });
+  btn.disabled=files.length===0;
+  vw.style.display=files.length===1?'block':'none';
+}
+function setProgress(pct,label){
+  document.getElementById('progWrap').style.display='block';
+  document.getElementById('progLabel').style.display='block';
+  document.getElementById('progBar').style.width=pct+'%';
+  document.getElementById('progLabel').textContent=label;
+}
+function clearProgress(){
+  document.getElementById('progWrap').style.display='none';
+  document.getElementById('progLabel').style.display='none';
+  document.getElementById('progBar').style.width='0%';
+}
+function showError(msg){const b=document.getElementById('errorBox');b.textContent=msg;b.style.display='block';}
+function clearError(){const b=document.getElementById('errorBox');b.textContent='';b.style.display='none';}
+
+let _previewMode='output';
+let _lastOffices=[];
+let _lastVenue='';
+
+function buildRawRows(offices){
+  return offices.map(o=>`<tr>
+    <td>${o.floor}</td>
+    <td class="unit-cell">${o.unit}</td>
+    <td>${o.sqft.toLocaleString()}</td>
+    <td>${o.sqm}</td>
+    <td>${o.desks}</td>
+    <td>${o.price}${o.wasPOA?` <span class="tag tag-poa">POA</span>`:''}</td>
+    <td>${o.availability==='Now'?`<span class="tag tag-ok">Now</span>`:o.availability?`<span class="tag tag-date">${o.availability}</span>`:'—'}</td>
+  </tr>`).join('');
+}
+
+function buildOutputRows(offices){
+  const baseInc=getWhatInc(_lastVenue);
+  return offices.map(o=>{
+    const amenities=baseInc.split('|').map(s=>s.trim()).filter(Boolean);
+    const inc=[`* Office ${o.unit}`,...amenities.map(a=>`* ${a}`)].join('\n');
+    return`<tr>
+    <td>${o.floor}</td>
+    <td class="unit-cell">${o.unit}</td>
+    <td>${o.sqft}</td>
+    <td>${o.desks}</td>
+    <td>£${o.price.toLocaleString()}${o.wasPOA?` <span class="tag tag-poa">POA</span>`:''}</td>
+    <td></td><td></td>
+    <td>${o.availability==='Now'?'':o.availability}</td>
+    <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${inc.replace(/"/g,"'")}">${inc.substring(0,45)}…</td>
+    <td></td>
+    <td></td><td></td>
+  </tr>`;}).join('');
+}
+
+function setPreviewMode(mode){
+  _previewMode=mode;
+  document.getElementById('btnRaw').classList.toggle('active',mode==='raw');
+  document.getElementById('btnOut').classList.toggle('active',mode==='output');
+  const head=document.getElementById('previewHead');
+  const body=document.getElementById('previewBody');
+  if(mode==='raw'){
+    head.innerHTML='<th>Floor</th><th>Unit</th><th>Sq ft</th><th>Sq m</th><th>Desks</th><th>Price</th><th>Available</th>';
+    body.innerHTML=buildRawRows(_lastOffices);
+  } else {
+    head.innerHTML='<th>Floor</th><th>Unit</th><th>Sq ft</th><th>Desks</th><th>Price/mo</th><th>Min</th><th>Max</th><th>Avail from</th><th>Included</th><th>Not incl.</th><th>Position</th><th>Rooms</th>';
+    body.innerHTML=buildOutputRows(_lastOffices);
+  }
+}
+
+function renderResults(offices,venue){
+  _lastOffices=offices;
+  _lastVenue=venue||'';
+  const div=document.getElementById('results');
+  const now=offices.filter(o=>o.availability==='Now').length;
+  const dated=offices.filter(o=>o.availability!=='Now').length;
+  const poa=offices.filter(o=>o.wasPOA).length;
+  const vd=venue||'Unknown venue';
+
+  div.innerHTML=`
+    <div class="results-hdr">
+      <h2>${offices.length} offices extracted<span class="venue-pill">${vd}</span></h2>
+      <button class="dl-btn" id="dlBtn">⬇ Download CSV</button>
+    </div>
+    <div class="stats">
+      <div class="stat-card"><div class="stat-n total">${offices.length}</div><div class="stat-l">Total</div></div>
+      <div class="stat-card"><div class="stat-n avail">${now}</div><div class="stat-l">Available now</div></div>
+      <div class="stat-card"><div class="stat-n soon">${dated}</div><div class="stat-l">Specific date</div></div>
+    </div>
+
+    <div class="preview-panel" id="previewPanel" style="display:block">
+      <div class="preview-hdr">
+        <div class="preview-title">Preview — <span id="previewCount">${offices.length}</span> rows</div>
+        <div class="view-toggle">
+          <button id="btnRaw" onclick="setPreviewMode('raw')">Raw</button>
+          <button id="btnOut" class="active" onclick="setPreviewMode('output')">CSV Output</button>
+        </div>
+      </div>
+      <div class="preview-scroll">
+        <table class="preview-table">
+          <thead><tr id="previewHead"></tr></thead>
+          <tbody id="previewBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    ${poa>0?`<div class="poa-info"><strong>${poa} office${poa>1?'s':''}</strong> listed as POA — priced using the configured starting rate for <strong>${vd}</strong>. Review before publishing.</div>`:''}`;
+
+  div.style.display='block';
+  setPreviewMode('output');
+
+  document.getElementById('dlBtn').onclick=()=>{
+    const csv=toCSV(offices,venue);
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=vd.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')+'-availability.csv';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  };
+}
+
+function renderMultiResults(groups){
+  _lastOffices=groups.flatMap(g=>g.offices);
+  _lastVenue=groups.map(g=>g.venue).join(', ');
+  const div=document.getElementById('results');
+  const total=groups.reduce((s,g)=>s+g.offices.length,0);
+  const now=groups.flatMap(g=>g.offices).filter(o=>o.availability==='Now').length;
+  const dated=total-now;
+
+  const buildingList=groups.map(g=>`
+    <div class="file-chip" style="justify-content:space-between">
+      <span class="fc-name">${g.venue}</span>
+      <span class="fc-size">${g.offices.length} offices</span>
+    </div>`).join('');
+
+  div.innerHTML=`
+    <div class="results-hdr">
+      <h2>${total} offices across ${groups.length} buildings</h2>
+      <button class="dl-btn" id="dlBtn">⬇ Download ZIP</button>
+    </div>
+    <div class="stats">
+      <div class="stat-card"><div class="stat-n total">${total}</div><div class="stat-l">Total</div></div>
+      <div class="stat-card"><div class="stat-n avail">${now}</div><div class="stat-l">Available now</div></div>
+      <div class="stat-card"><div class="stat-n soon">${dated}</div><div class="stat-l">Specific date</div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">${buildingList}</div>
+    <div class="preview-panel" id="previewPanel" style="display:block">
+      <div class="preview-hdr">
+        <div class="preview-title">Preview — <span id="previewCount">${total}</span> rows (all buildings)</div>
+        <div class="view-toggle">
+          <button id="btnRaw" onclick="setPreviewMode('raw')">Raw</button>
+          <button id="btnOut" class="active" onclick="setPreviewMode('output')">CSV Output</button>
+        </div>
+      </div>
+      <div class="preview-scroll">
+        <table class="preview-table">
+          <thead><tr id="previewHead"></tr></thead>
+          <tbody id="previewBody"></tbody>
+        </table>
+      </div>
+    </div>`;
+
+  div.style.display='block';
+  setPreviewMode('output');
+
+  document.getElementById('dlBtn').onclick=async()=>{
+    const zip=new JSZip();
+    const d=new Date();
+    const date=`${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+    groups.forEach(g=>{
+      const csv=toCSV(g.offices,g.venue);
+      const safe=g.venue.replace(/[:\\/\?\*\[\]<>|]/g,'').trim().substring(0,80);
+      zip.file(`${safe}.csv`,csv);
+    });
+    const blob=await zip.generateAsync({type:'blob'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=`Mantle Space - ${date}.zip`;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  };
+}
+
+// ── Events ──
+document.getElementById('fileInput').addEventListener('change',e=>{
+  const pdfs=Array.from(e.target.files).filter(f=>f.name.endsWith('.pdf'));
+  files=[...files,...pdfs];updateFiles();e.target.value='';
+});
+const dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragging');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('dragging'));
+dz.addEventListener('drop',e=>{
+  e.preventDefault();dz.classList.remove('dragging');
+  const pdfs=Array.from(e.dataTransfer.files).filter(f=>f.name.endsWith('.pdf'));
+  files=[...files,...pdfs];updateFiles();
+});
+
+document.getElementById('convertBtn').addEventListener('click',async()=>{
+  const btn=document.getElementById('convertBtn');
+  const spinner=document.getElementById('spinner');
+  const label=document.getElementById('btnLabel');
+  clearError();
+  document.getElementById('results').style.display='none';
+  btn.disabled=true;spinner.style.display='block';label.textContent='Processing…';
+  try{
+    const overrideVenue=document.getElementById('venueOverride').value.trim()||null;
+    // Group by venue: [{venue, offices}]
+    const groups=[];
+    for(let fi=0;fi<files.length;fi++){
+      const file=files[fi];
+      setProgress(Math.round((fi/files.length)*80),`Reading ${file.name} (${fi+1} of ${files.length})…`);
+      const pages=await extractPages(file,(p,total)=>{
+        const base=(fi/files.length)*80,chunk=(1/files.length)*80;
+        setProgress(Math.round(base+(p/total)*chunk),`Page ${p}/${total} — ${file.name}`);
+      });
+      const firstText=pages[0]?.map(l=>l.cols.join(' ')).join('\n')||'';
+      const venue=overrideVenue||detectVenue(firstText)||file.name.replace('.pdf','');
+      const offices=parseOffices(pages,venue);
+      if(offices.length>0)groups.push({venue,offices});
+    }
+    const totalOffices=groups.reduce((s,g)=>s+g.offices.length,0);
+    setProgress(100,`Done — ${totalOffices} offices across ${groups.length} building${groups.length!==1?'s':''}`);
+    if(groups.length===0){
+      showError('No available offices found. Check you\'ve uploaded a Mantle Space "Space Information" PDF — all units may be LET, under offer, or the layout may differ slightly.');
+    } else if(groups.length===1){
+      renderResults(groups[0].offices,groups[0].venue);
+    } else {
+      renderMultiResults(groups);
+    }
+  }catch(err){
+    showError('Error reading PDF: '+err.message);console.error(err);
+  }
+  btn.disabled=false;spinner.style.display='none';label.textContent='Convert to CSV';
+  setTimeout(clearProgress,2500);
+});
+</script>
+</body>
+</html>
